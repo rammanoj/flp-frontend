@@ -101,80 +101,84 @@ export default class UserList extends Component {
 
   render = () => {
     return (
-      <div style={{ overflowX: "hidden" }}>
+      <Fragment>
         <div style={{ marginLeft: 10 }}>
           <Icon name="users" />
           <h4 style={{ display: "inline" }}>Team</h4>
         </div>
-        {this.state.loading ? (
-          <Loader active>getting users..</Loader>
-        ) : (
-          <Fragment>
-            {this.state.emptyresult ? (
-              <Fragment>
-                <br />
-                <h4>No users in the group.</h4>
-                <br />
-              </Fragment>
-            ) : (
-              <Scrollbars style={{ height: "30vh" }}>
-                <br />
-                <Grid colums={4}>
-                  {this.state.users.map((obj, index) => (
-                    <Popup
-                      trigger={
-                        <Grid.Column width={3}>
-                          <div key={index}>
-                            <div style={{ cursor: "pointer" }}>
-                              <div style={{ textAlign: "center" }}>
-                                <Icon
-                                  name="user"
-                                  circular
-                                  inverted
-                                  size={40}
-                                  style={{ background: "#c2c4c6" }}
-                                />{" "}
-                                <span>
-                                  {obj.username.length > 6
-                                    ? obj.username.substr(0, 4) + ".."
-                                    : obj.username}
-                                </span>
+        <Scrollbars style={{ height: "30vh" }}>
+          {this.state.loading ? (
+            <Loader active>getting users..</Loader>
+          ) : (
+            <Fragment>
+              {this.state.emptyresult ? (
+                <Fragment>
+                  <br />
+                  <h4>No users in the group.</h4>
+                  <br />
+                </Fragment>
+              ) : (
+                <Fragment>
+                  <Grid style={{ overflowX: "hidden" }}>
+                    {this.state.users.map((obj, index) => (
+                      <Popup
+                        trigger={
+                          <Grid.Column
+                            width={3}
+                            style={{ overflowX: "hidden" }}
+                          >
+                            <div key={index}>
+                              <div style={{ cursor: "pointer" }}>
+                                <div style={{ textAlign: "center" }}>
+                                  <Icon
+                                    name="user"
+                                    circular
+                                    inverted
+                                    size={40}
+                                    style={{ background: "#c2c4c6" }}
+                                  />{" "}
+                                  <span>
+                                    {obj.username.length > 6
+                                      ? obj.username.substr(0, 4) + ".."
+                                      : obj.username}
+                                  </span>
+                                </div>
                               </div>
                             </div>
-                          </div>
-                        </Grid.Column>
-                      }
-                    >
-                      {obj.username}
-                    </Popup>
-                  ))}
-                </Grid>
-                {this.state.pagination === true ? (
-                  <div
-                    style={{
-                      marginTop: 30,
-                      marginBottom: 20,
+                          </Grid.Column>
+                        }
+                      >
+                        {obj.username}
+                      </Popup>
+                    ))}
+                  </Grid>
+                  {this.state.pagination === true ? (
+                    <div
+                      style={{
+                        marginTop: 30,
+                        marginBottom: 20,
 
-                      textAlign: "center"
-                    }}
-                  >
-                    <Pagination
-                      limit={paginationCount}
-                      offset={this.state.offset}
-                      total={this.state.items}
-                      onClick={(e, props, offset) =>
-                        this.handlePageClick(offset)
-                      }
-                    />
-                  </div>
-                ) : (
-                  ""
-                )}
-              </Scrollbars>
-            )}
-          </Fragment>
-        )}
-      </div>
+                        textAlign: "center"
+                      }}
+                    >
+                      <Pagination
+                        limit={paginationCount}
+                        offset={this.state.offset}
+                        total={this.state.items}
+                        onClick={(e, props, offset) =>
+                          this.handlePageClick(offset)
+                        }
+                      />
+                    </div>
+                  ) : (
+                    ""
+                  )}
+                </Fragment>
+              )}
+            </Fragment>
+          )}
+        </Scrollbars>
+      </Fragment>
     );
   };
 }

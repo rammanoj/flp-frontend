@@ -5,6 +5,7 @@
   "dependencies": {
     "express": "^4.16.4",
     "express-favicon": "^2.0.1",
+    "netlify-cli": "^2.11.18",
     "path": "^0.12.7",
     "react": "^16.8.6",
     "react-copy-to-clipboard": "^5.0.1",
@@ -38,7 +39,5 @@
       "last 1 safari version"
     ]
   },
-  "devDependencies": {
-    "semantic-ui": "^2.4.2"
-  }
+  "devDependencies": {}
 }

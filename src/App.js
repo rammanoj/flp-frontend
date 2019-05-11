@@ -2,10 +2,9 @@ import React, { Component } from "react";
 import "./App.css";
 import { Route, Switch, BrowserRouter } from "react-router-dom";
 import { Login, Register, ForgotPassword, Logout } from "./components/Auth";
-import Dashboard from "./components/dashboard";
 import { Profile } from "./components/profile";
 import NotFound from "./components/404";
-// import InviteUser from "./components/invite";
+import InviteUser from "./components/invite";
 import Home from "./components/home";
 
 class App extends Component {
@@ -13,6 +12,8 @@ class App extends Component {
     return (
       <BrowserRouter>
         <Switch>
+          {/* The below route display login, for unAuthenticated user Orelse it display Home */}
+          <Route exact path="/" component={Login} />
           {/* Rgistration Router */}
           <Route exact path="/signup" component={Register} />
           {/* Login Router */}
@@ -23,12 +24,12 @@ class App extends Component {
           <Route exact path="/profile" component={Profile} />
           {/* Logout the user */}
           <Route exact path="/logout" component={Logout} />
-          {/* Home page */}
-          {/* <Route exact path="/dashboard" component={Dashboard} /> */}
           {/* Invite User */}
-          {/* <Route exact path="/team/invite/:link" component={InviteUser} /> */}
+          <Route exact path="/team/invite/:link" component={InviteUser} />
           {/* Home page */}
           <Route exact path="/home" component={Home} />
+          {/* Post link */}
+          <Route exact path="/group/:group/post/:post" component={Home} />
           {/* 404 Handler */}
           <Route component={NotFound} />
         </Switch>

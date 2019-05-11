@@ -10,174 +10,188 @@ import {
   Label,
   Button,
   Icon,
-  Grid
+  Grid,
+  Card
 } from "semantic-ui-react";
 import { Link, Redirect } from "react-router-dom";
 import { checkInviteLink, TeamAddRemoveUser, TeamInviteUser } from "./../api";
 
-// class InviteUser extends React.Component {
-//   constructor(props) {
-//     super(props);
-//     let link = this.props.match.params;
-//     if (link.hasOwnProperty("link")) {
-//       link = link.link;
-//     } else {
-//       link = "";
-//     }
-//     this.state = {
-//       isLoggedIn: getCookie("token")[1],
-//       link: link,
-//       loading: true,
-//       content: "",
-//       response: {
-//         open: false,
-//         type: "",
-//         message: ""
-//       },
-//       route: false
-//     };
-//   }
+class InviteUser extends React.Component {
+  constructor(props) {
+    super(props);
+    let link = this.props.match.params;
+    if (link.hasOwnProperty("link")) {
+      link = link.link;
+    } else {
+      link = "";
+    }
+    this.state = {
+      isLoggedIn: getCookie("token")[1],
+      link: link,
+      loading: true,
+      content: "",
+      response: {
+        open: false,
+        type: "",
+        message: ""
+      },
+      route: false,
+      visible: false
+    };
+  }
 
-//   componentDidMount = () => {
-//     if (this.state.isLoggedIn) {
-//       // check the validity of the link.
+  componentDidMount = () => {
+    this.setState({ visible: true });
+    if (this.state.isLoggedIn) {
+      // check the validity of the link.
 
-//       fetchAsynchronous(
-//         checkInviteLink + this.state.link,
-//         "GET",
-//         undefined,
-//         { Authorization: "Token " + getCookie("token")[0].value },
-//         this.checkCallback
-//       );
-//     }
-//   };
+      fetchAsynchronous(
+        checkInviteLink + this.state.link,
+        "GET",
+        undefined,
+        { Authorization: "Token " + getCookie("token")[0].value },
+        this.checkCallback
+      );
+    } else {
+      this.setState({ loading: false });
+    }
+  };
 
-//   confirm = operation => {
-//     this.setState({ loading: true });
-//     let confirm = false;
-//     if (operation === "yes") {
-//       //   Add the user to the group.
-//       confirm = true;
-//     }
-//     let data = {
-//       link: this.state.link,
-//       operation: "Add",
-//       confirm: confirm
-//     };
-//     let headers = {
-//       Authorization: "Token " + getCookie("token")[0].value,
-//       "Content-Type": "application/json"
-//     };
-//     fetchAsynchronous(TeamAddRemoveUser, "POST", data, headers, this.callback);
-//   };
+  confirm = operation => {
+    this.setState({ loading: true });
+    let confirm = false;
+    if (operation === "yes") {
+      //   Add the user to the group.
+      confirm = true;
+    }
+    let data = {
+      link: this.state.link,
+      operation: "Add",
+      confirm: confirm
+    };
+    let headers = {
+      Authorization: "Token " + getCookie("token")[0].value,
+      "Content-Type": "application/json"
+    };
+    fetchAsynchronous(TeamAddRemoveUser, "POST", data, headers, this.callback);
+  };
 
-//   callback = response => {
-//     let type = "#32CD32";
-//     if (response.error === 1) {
-//       type = "red";
-//     }
-//     this.setState({
-//       response: { open: true, message: response.message, type: type },
-//       route: true
-//     });
-//   };
+  callback = response => {
+    let type = "#32CD32";
+    if (response.error === 1) {
+      type = "red";
+    }
+    this.setState({
+      response: { open: true, message: response.message, type: type },
+      route: true
+    });
+  };
 
-//   checkCallback = response => {
-//     let { classes } = this.props;
-//     let header, message;
-//     if (response.error === 1) {
-//       // link is invalid
-//       header = "The link is Invalid";
-//       message = "The link given is not valid.";
-//     } else {
-//       // link is valid
-//       header = "Confirmation to join ?";
-//       message =
-//         "Are you sure that you want to join the group? On clicking 'yes', you will be added to the group. On selecting 'No' the invitation will be rejected.";
-//     }
+  checkCallback = response => {
+    let content = {};
+    if (response.error === 1) {
+      // link is invalid
+      content.header = "The link is Invalid";
+      content.message = "The link given is not valid.";
+    } else {
+      // link is valid
+      content.header = "Confirmation to join ?";
+      content.message =
+        "Are you sure that you want to join the group? On clicking 'yes', you will be added to the group. On selecting 'No' the invitation will be rejected.";
+    }
 
-//     let content = (
-//       <Card className={classes.card}>
-//         <CardContent>
-//           <Typography variant="h5" component="h2">
-//             {header}
-//           </Typography>
-//           <br />
-//           <Typography component="p">{message}</Typography>
-//         </CardContent>
-//         {response.error !== 1 ? (
-//           <CardActions style={{ float: "right" }}>
-//             <Button
-//               size="small"
-//               onClick={() => this.confirm("no")}
-//               stlye={{ color: "red" }}
-//             >
-//               No
-//             </Button>
-//             <Button
-//               size="small"
-//               onClick={() => this.confirm("yes")}
-//               style={{ color: "#32CD32" }}
-//             >
-//               Yes
-//             </Button>
-//           </CardActions>
-//         ) : (
-//           ""
-//         )}
-//       </Card>
-//     );
+    content.error = response.error;
 
-//     this.setState({ content: content, loading: false });
-//   };
+    this.setState({ content: content, loading: false });
+  };
 
-//   render = () => {
-//     let { classes } = this.props;
-//     if (!this.state.isLoggedIn) {
-//       return (
-//         <Zoom in={true}>
-//           <Card className={classes.card}>
-//             <CardContent>
-//               <Typography variant="h5" component="h2">
-//                 Authentication needed
-//               </Typography>
-//               <br />
-//               <Typography component="p">
-//                 You need be logged in, to accept the invitation to the team.
-//                 Click the invite link again after logging in.
-//               </Typography>
-//             </CardContent>
-//             <CardActions style={{ float: "right" }}>
-//               <Link to="/login" className={classes.link}>
-//                 <Button size="small">Login and Continue</Button>
-//               </Link>
-//             </CardActions>
-//           </Card>
-//         </Zoom>
-//       );
-//     }
+  render = () => {
+    let { content } = this.state;
 
-//     if (this.state.route) {
-//       return (
-//         <React.Fragment>
-//           <Redirect to="/dashboard" />
-//         </React.Fragment>
-//       );
-//     }
+    if (this.state.route) {
+      return (
+        <React.Fragment>
+          <Redirect to="/home" />
+        </React.Fragment>
+      );
+    }
 
-//     return (
-//       <React.Fragment>
-//         {this.state.loading ? (
-//           <div style={{ textAlign: "center", marginTop: "10vw" }}>
-//             <CircularProgress />
-//           </div>
-//         ) : (
-//           <React.Fragment>{this.state.content}</React.Fragment>
-//         )}
-//       </React.Fragment>
-//     );
-//   };
-// }
+    return (
+      <React.Fragment>
+        {this.state.loading ? (
+          <Loader active>Checking Link...</Loader>
+        ) : (
+          <div style={{ marginTop: "25vh" }}>
+            <Grid>
+              <Grid.Row>
+                <Grid.Column width={4} />
+                <Grid.Column width={8}>
+                  {!this.state.isLoggedIn ? (
+                    <Transition visible={true} duration={400} animation="scale">
+                      <Card style={{ width: "100%" }}>
+                        <Card.Content>
+                          <Card.Header>Authentication needed</Card.Header>
+                          <Card.Description>
+                            You need be logged in, to accept the invitation to
+                            the team. Click the invite link again after logging
+                            in.
+                          </Card.Description>
+                        </Card.Content>
+                        <Card.Content extra>
+                          <div style={{ float: "right" }}>
+                            <Link to="/login">
+                              <Button size="small">Login and Continue</Button>
+                            </Link>
+                          </div>
+                        </Card.Content>
+                      </Card>
+                    </Transition>
+                  ) : (
+                    <Transition visible={true} duration={400} animation="scale">
+                      <Card style={{ width: "100%", padding: 10 }}>
+                        <Card.Content>
+                          <Card.Header style={{ textAlign: "center" }}>
+                            {content.header}
+                          </Card.Header>
+                        </Card.Content>
+                        <Card.Description style={{ textAlign: "center" }}>
+                          {content.message}
+                        </Card.Description>
+                        {content.error !== 1 ? (
+                          <Card.Content extra>
+                            <div style={{ float: "right" }}>
+                              <Button
+                                size="small"
+                                onClick={() => this.confirm("no")}
+                                stlye={{ color: "red" }}
+                              >
+                                No
+                              </Button>
+                              <Button
+                                size="small"
+                                onClick={() => this.confirm("yes")}
+                                style={{ color: "#32CD32" }}
+                              >
+                                Yes
+                              </Button>
+                            </div>
+                          </Card.Content>
+                        ) : (
+                          ""
+                        )}
+                      </Card>
+                    </Transition>
+                  )}
+                </Grid.Column>
+                <Grid.Column width={4} />
+              </Grid.Row>
+            </Grid>
+          </div>
+        )}
+      </React.Fragment>
+    );
+  };
+}
 
 class Invite extends React.Component {
   constructor(props) {
@@ -195,6 +209,11 @@ class Invite extends React.Component {
       team: this.props.group.pk,
       email: this.state.emails
     };
+    this.props.setMessage({
+      message: false,
+      header: "",
+      type: 0
+    });
     let headers = {
       Authorization: "Token " + getCookie("token")[0].value,
       "Content-Type": "application/json"
@@ -216,6 +235,7 @@ class Invite extends React.Component {
         header: "Error",
         type: 1
       });
+      this.setState({ loading: false });
     } else {
       this.setState({ loading: false, emails: [], email: "", visible: false });
       this.props.setMessage({
@@ -231,7 +251,7 @@ class Invite extends React.Component {
       <React.Fragment>
         <br />
         <Button
-          style={{ width: "100%" }}
+          style={{ width: "95%" }}
           secondary
           onClick={() => this.setState({ visible: true })}
         >
@@ -304,15 +324,25 @@ class Invite extends React.Component {
               </Grid>
               <br />
 
-              <div style={{ textAlign: "center" }}>
-                <b>Note:</b> 1. On entering an email hit enter, so that the
-                email will be considered for invite process. <br />
-                2. At a max of 20 members can be invited at a max of one
-                attempt.
-              </div>
+              <b>
+                <ol>
+                  <li>
+                    On entering an email hit enter, so that the email will be
+                    considered for invite process.
+                  </li>
+                  <li>
+                    At a max of 20 members can be invited at a max of one
+                    attempt.
+                  </li>
+                </ol>
+              </b>
               <br />
               <div style={{ textAlign: "center" }}>
-                <Button secondary onClick={() => this.api()}>
+                <Button
+                  secondary
+                  onClick={() => this.api()}
+                  loading={this.state.loading}
+                >
                   Send Invitations
                 </Button>
               </div>
@@ -324,5 +354,5 @@ class Invite extends React.Component {
   };
 }
 
-// export default InviteUser;
+export default InviteUser;
 export { Invite };

@@ -9,7 +9,7 @@ import {
   imageFormats,
   months,
   postAction,
-  paginationCount
+  postpaginationCount as paginationCount
 } from "./../api";
 import { getCookie } from "./cookie";
 import {
@@ -25,11 +25,13 @@ import {
   Form,
   Divider,
   Label,
-  Header
+  Header,
+  Popup
 } from "semantic-ui-react";
 import { BaseComment } from "./comment";
 import { CommentPagination } from "./allcomments";
 import Pagination from "semantic-ui-react-button-pagination";
+import { CopyToClipboard } from "react-copy-to-clipboard";
 
 class BasePost extends Component {
   constructor(props) {
@@ -40,6 +42,7 @@ class BasePost extends Component {
       posts: [],
       loading: true,
       emptyData: false,
+      emptyContent: "No post found as per given requirement",
       modalvisible: false,
       header: "",
       about: "",
@@ -52,14 +55,13 @@ class BasePost extends Component {
       items: 0,
       pagination: false,
       searchvalue: "",
-      pksearch: false
+      pksearch: this.props.params
     };
   }
 
   onsearchEnter = (e, searchvalue) => {
     if (e.key === "Enter") {
       let uri;
-      console.log("enteredd this");
       if (searchvalue != "") {
         uri =
           PostListView +
@@ -106,14 +108,20 @@ class BasePost extends Component {
   };
 
   componentDidMount = () => {
-    let uri = PostListView + this.state.group.pk + "/?page=" + this.state.page;
+    let uri = PostListView + this.state.group.pk + "/";
+    if (this.state.pksearch !== false) {
+      uri +=
+        "?name=pk&search=" + this.state.pksearch + "&page=" + this.state.page;
+      this.setState({ pksearch: false });
+    } else {
+      uri += "?page=" + this.state.page;
+    }
     this.getList(uri);
   };
 
   fetchPostCallback = response => {
     if (response.hasOwnProperty("results")) {
       if (this.state.page === 1 && response.results.length === 0) {
-        console.log("came here");
         this.setState({
           emptyData: true,
           loading: false
@@ -215,7 +223,9 @@ class BasePost extends Component {
     } else {
       // add post to the list of posts.
       let posts = [...this.state.posts];
+
       posts.unshift(response);
+
       this.props.setMessage({
         message: "Successfully added post to timeline",
         type: 0,
@@ -227,7 +237,8 @@ class BasePost extends Component {
         formloading: false,
         header: "",
         about: "",
-        file: ""
+        file: "",
+        emptyData: false
       });
     }
   };
@@ -396,7 +407,12 @@ class BasePost extends Component {
                       textAlign: "center"
                     }}
                   >
-                    <h2>No Posts in the group.</h2>
+                    <h2>
+                      {this.state.searchvalue === "" ||
+                      this.state.pksearch === false
+                        ? "No posts in group as per given requirement"
+                        : "NO posts posted in the timeline"}
+                    </h2>
                   </div>
                 </Fragment>
               ) : (
@@ -405,7 +421,27 @@ class BasePost extends Component {
                     <Fragment key={index}>
                       <Card style={{ width: "80%", marginLeft: 40 }}>
                         <Card.Content>
-                          <Card.Header>{obj.header}</Card.Header>
+                          <Card.Header>
+                            {obj.header}{" "}
+                            <CopyToClipboard
+                              onCopy={() => alert("url copied to clipboard")}
+                              text={obj.link}
+                            >
+                              <div
+                                style={{
+                                  display: "inline",
+                                  float: "right",
+                                  cursor: "pointer"
+                                }}
+                              >
+                                <Popup
+                                  trigger={<Icon name="share" />}
+                                  content="Share"
+                                />
+                              </div>
+                            </CopyToClipboard>
+                          </Card.Header>
+
                           <Card.Meta>
                             <span className="date">
                               {this.formatTime(obj.created_on)}
@@ -471,7 +507,7 @@ class BasePost extends Component {
                               })
                             }
                           >
-                            <Icon name="edit" />
+                            <Icon name="comments" />
                           </Button>
                         </Card.Content>
 

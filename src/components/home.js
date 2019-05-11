@@ -14,6 +14,7 @@ import {
   TextArea,
   Header
 } from "semantic-ui-react";
+import { Redirect } from "react-router-dom";
 import { getCookie } from "./cookie";
 import { NavBar, MessageDisplay } from "./elements/nav";
 import { GroupListView, GroupCreateView, TeamAddRemoveUser } from "./../api";
@@ -22,12 +23,15 @@ import { Scrollbars } from "react-custom-scrollbars";
 import { BasePost } from "./post";
 import UserList from "./team";
 import { Invite } from "./invite";
+import Notify from "./notifications";
 
 class Home extends Component {
   constructor(props) {
     super(props);
+
+    let params = this.props.match.params;
     this.state = {
-      isLoggedIn: getCookie("user")[1],
+      isLoggedIn: getCookie("token")[1],
       loading: true,
       groups: [],
       groupSelected: {},
@@ -42,14 +46,15 @@ class Home extends Component {
         header: "",
         type: ""
       },
-      loader: false
+      loader: false,
+      params: Object.keys(params).length !== 0 ? params : false,
+      notFound: false
     };
 
     this.child = React.createRef();
   }
 
   handleSearch = (e, value) => {
-    console.log(value);
     this.child.current.onsearchEnter(e, value);
   };
 
@@ -66,21 +71,37 @@ class Home extends Component {
   };
 
   componentDidMount = () => {
-    fetchAsynchronous(
-      GroupListView,
-      "GET",
-      undefined,
-      { Authorization: "Token " + getCookie("token")[0].value },
-      this.getGroupsCallback
-    );
+    if (this.state.isLoggedIn) {
+      fetchAsynchronous(
+        GroupListView,
+        "GET",
+        undefined,
+        { Authorization: "Token " + getCookie("token")[0].value },
+        this.getGroupsCallback
+      );
+    }
   };
 
   getGroupsCallback = response => {
     if (!response.hasOwnProperty("error")) {
-      this.setState({
-        loading: false,
-        groups: response.results
-      });
+      this.setState(
+        {
+          loading: false,
+          groups: response.results
+        },
+        () => {
+          if (this.state.params) {
+            let obj = this.state.groups.find(
+              obj => obj.pk == this.state.params.group
+            );
+            if (obj === undefined) {
+              this.setState({ notFound: true });
+            } else {
+              this.handleGroupSelect(obj);
+            }
+          }
+        }
+      );
     }
   };
 
@@ -163,8 +184,12 @@ class Home extends Component {
 
   render() {
     let { groupSelected: group, active, activeItem, visible } = this.state;
+    if (!this.state.isLoggedIn) {
+      return <Redirect to="/login" />;
+    }
     return (
       <div>
+        {this.state.notFound ? <Redirect to="/404" /> : ""}
         {this.state.loading ? (
           <div>
             <Dimmer active inverted>
@@ -276,19 +301,29 @@ class Home extends Component {
                         <Accordion.Content active={active}>
                           <div style={{ width: "auto", textAlign: "center" }}>
                             <Scrollbars style={{ height: "25vh" }}>
-                              <Menu vertical style={{ width: "100%" }}>
-                                {this.state.groups.map((obj, index) => (
-                                  <Menu.Item
-                                    key={index}
-                                    name={obj.name}
-                                    active={activeItem === obj.pk}
-                                    style={{ cursor: "pointer" }}
-                                    onClick={() => this.handleGroupSelect(obj)}
-                                  >
-                                    {obj.name}
-                                  </Menu.Item>
-                                ))}
-                              </Menu>
+                              {this.state.groups.length === 0 ? (
+                                <div style={{ textAlign: "center" }}>
+                                  No groups currently
+                                </div>
+                              ) : (
+                                <Menu vertical style={{ width: "100%" }}>
+                                  <React.Fragment>
+                                    {this.state.groups.map((obj, index) => (
+                                      <Menu.Item
+                                        key={index}
+                                        name={obj.name}
+                                        active={activeItem === obj.pk}
+                                        style={{ cursor: "pointer" }}
+                                        onClick={() =>
+                                          this.handleGroupSelect(obj)
+                                        }
+                                      >
+                                        {obj.name}
+                                      </Menu.Item>
+                                    ))}
+                                  </React.Fragment>
+                                </Menu>
+                              )}
                             </Scrollbars>
                           </div>
                         </Accordion.Content>
@@ -355,6 +390,11 @@ class Home extends Component {
                       setLoader={this.setLoader}
                       group={this.state.groupSelected}
                       setMessage={this.setMessage}
+                      params={
+                        this.state.params !== false
+                          ? this.state.params.post
+                          : false
+                      }
                     />
                   )}
                 </Grid.Column>
@@ -363,10 +403,15 @@ class Home extends Component {
                   {this.isempty(group) ? (
                     ""
                   ) : (
-                    <div style={{ overflowX: "hidden", overflowY: "auto" }}>
+                    <Scrollbars
+                      style={{
+                        height: "99%"
+                      }}
+                    >
+                      <Notify group={group} />
                       <UserList group={group} />
                       <Invite group={group} setMessage={this.setMessage} />
-                    </div>
+                    </Scrollbars>
                   )}
                 </Grid.Column>
               </Grid.Row>

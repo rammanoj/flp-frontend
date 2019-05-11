@@ -1,4 +1,4 @@
-const BASE_API_URI = "http://127.0.0.1:8000/";
+const BASE_API_URI = "http://52.14.193.169/";
 
 // method: POST
 export const signup = BASE_API_URI + "accounts/signup/";
@@ -44,10 +44,13 @@ export const commentList = BASE_API_URI + "post/comments/";
 export const replyCreate = BASE_API_URI + "recomment/";
 // method: PATCH
 export const replyUpdate = BASE_API_URI + "recomment/update/";
+// method: GET
+export const notifyListView = BASE_API_URI + "<group_pk>/notifications/";
 
 /* Pagination Count */
 
-export const paginationCount = 10;
+export const paginationCount = 80;
+export const postpaginationCount = 25;
 
 // Accepted MiME types
 export const acceptedTypes = [
