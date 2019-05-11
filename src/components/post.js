@@ -185,7 +185,9 @@ class BasePost extends Component {
     data.append("team", this.state.group.pk);
     data.append("header", this.state.header);
     data.append("about", this.state.about);
-    data.append("file", this.state.file);
+    if (this.state.file !== "") {
+      data.append("file", this.state.file);
+    }
 
     fetchFileAsynchronous(
       PostCreateView,
@@ -297,8 +299,9 @@ class BasePost extends Component {
           <Modal open={modalvisible} centered={false}>
             <Modal.Header>
               Post on Timeline
-              <Button
-                icon="close"
+              <Icon
+                name="close"
+                color="red"
                 onClick={() =>
                   this.setState({
                     modalvisible: false,
@@ -307,82 +310,80 @@ class BasePost extends Component {
                     file: ""
                   })
                 }
-                circular
-                negative
-                style={{
-                  float: "right"
-                }}
+                style={{ float: "right", cursor: "pointer" }}
               />
             </Modal.Header>
             <Modal.Content>
-              <Grid columns="equal">
-                <Grid.Row>
-                  <Grid.Column />
-                  <Grid.Column textAlign="center">
-                    <Input
-                      icon="edit"
-                      type="text"
-                      name="header"
-                      iconPosition="left"
-                      placeholder="Post header"
-                      value={this.state.header}
-                      onChange={this.handleChange}
-                      style={{ marginBottom: 15 }}
-                    />
-                    <Form.TextArea
-                      placeholder="Tell us more"
-                      name="about"
-                      value={this.state.about}
-                      onChange={this.handleChange}
-                      style={{ marginBottom: 15 }}
-                      rows={4}
-                    />
-                    <div style={{ textAlign: "center" }}>
-                      <input
-                        style={{ display: "none" }}
-                        type="file"
-                        id="postfile"
-                        onChange={e => {
-                          let file = e.target.files[0];
-                          let type = file.type.split("/")[0];
-                          if (
-                            acceptedTypes.indexOf(file.type) > -1 ||
-                            type === "image"
-                          ) {
-                            this.setState({ file: file });
-                          } else {
-                            this.props.setMessage({
-                              message:
-                                "Only image, pdf, zip files are accepted",
-                              type: 1,
-                              header: "Error"
-                            });
-                          }
-                        }}
+              <Form>
+                <Grid columns="equal">
+                  <Grid.Row>
+                    <Grid.Column />
+                    <Grid.Column textAlign="center">
+                      <Input
+                        icon="edit"
+                        type="text"
+                        name="header"
+                        iconPosition="left"
+                        placeholder="Post header"
+                        value={this.state.header}
+                        onChange={this.handleChange}
+                        style={{ marginBottom: 15 }}
                       />
-                      <label htmlFor="postfile" style={{ cursor: "pointer" }}>
-                        Add image / file{" "}
-                        {this.state.file != "" &&
-                        this.state.file.name.length >= 20
-                          ? this.state.file.name.substr(0, 19) + ".."
-                          : this.state.file.name}
-                      </label>
-                    </div>
-                    <br />
-                    <Button
-                      disabled={this.state.formloading}
-                      onClick={this.handlePostCreate}
-                      loading={this.state.formloading}
-                      secondary
-                    >
-                      Post it
-                    </Button>
-                    <Divider horizontal />
-                  </Grid.Column>
+                      <Form.TextArea
+                        placeholder="Tell us more"
+                        name="about"
+                        value={this.state.about}
+                        onChange={this.handleChange}
+                        style={{ marginBottom: 15 }}
+                        rows={4}
+                      />
+                      <div style={{ textAlign: "center" }}>
+                        <input
+                          style={{ display: "none" }}
+                          type="file"
+                          id="postfile"
+                          onChange={e => {
+                            let file = e.target.files[0];
+                            let type = file.type.split("/")[0];
+                            if (
+                              acceptedTypes.indexOf(file.type) > -1 ||
+                              type === "image"
+                            ) {
+                              this.setState({ file: file });
+                            } else {
+                              this.props.setMessage({
+                                message:
+                                  "Only image, pdf, zip files are accepted",
+                                type: 1,
+                                header: "Error"
+                              });
+                            }
+                          }}
+                        />
+                        <label htmlFor="postfile" style={{ cursor: "pointer" }}>
+                          Add image / file{" "}
+                          {this.state.file != "" &&
+                          this.state.file.name.length >= 20
+                            ? this.state.file.name.substr(0, 19) + ".."
+                            : this.state.file.name}
+                        </label>
+                      </div>
+                      <br />
+                      <Button
+                        disabled={this.state.formloading}
+                        onClick={this.handlePostCreate}
+                        loading={this.state.formloading}
+                        secondary
+                      >
+                        Post it
+                      </Button>
+                      <Divider horizontal />
+                    </Grid.Column>
 
-                  <Grid.Column />
-                </Grid.Row>
-              </Grid>
+                    <Grid.Column />
+                  </Grid.Row>
+                </Grid>
+              </Form>
             </Modal.Content>
           </Modal>
         </Transition>
@@ -460,37 +461,50 @@ class BasePost extends Component {
                               ""
                             )}
                           </Card.Meta>
-                          {imageFormats.indexOf(
-                            obj.file
-                              .split("/")
-                              [obj.file.split("/").length - 1].split(".")[1]
-                          ) > -1 ? (
+                          <br />
+                          {obj.file !== null ? (
                             <Fragment>
-                              <img
-                                src={obj.file}
-                                alt={obj.header + " image"}
-                                style={{
-                                  width: "100%",
-                                  height: "300px"
-                                }}
-                              />
-                              <br />
+                              {imageFormats.indexOf(
+                                obj.file
+                                  .split("/")
+                                  [obj.file.split("/").length - 1].split(".")[1]
+                              ) > -1 ? (
+                                <div
+                                  style={{
+                                    background: "#eff0f2",
+                                    textAlign: "center"
+                                  }}
+                                >
+                                  <img
+                                    src={obj.file}
+                                    alt={obj.header + " image"}
+                                    style={{
+                                      maxWidth: "100%"
+                                    }}
+                                  />
+                                  <br />
+                                </div>
+                              ) : (
+                                <Fragment>
+                                  <p>
+                                    The contents of the file can not be
+                                    displayed in the post. You can download it
+                                    here
+                                    <a
+                                      style={{ float: "right" }}
+                                      href={obj.file}
+                                      download
+                                    >
+                                      Download
+                                    </a>
+                                  </p>
+                                </Fragment>
+                              )}
                             </Fragment>
                           ) : (
-                            <Fragment>
-                              <p>
-                                The contents of the file can not be displayed in
-                                the post. You can download it here
-                                <a
-                                  style={{ float: "right" }}
-                                  href={obj.file}
-                                  download
-                                >
-                                  Download
-                                </a>
-                              </p>
-                            </Fragment>
+                            ""
                           )}
+                          <br />
                           <Card.Description>{obj.about}</Card.Description>
                         </Card.Content>
                         <Card.Content extra>
@@ -634,7 +648,9 @@ class PostEdit extends Component {
       let data = new FormData();
       data.append("header", this.state.header);
       data.append("about", this.state.about);
-      data.append("file", this.state.file);
+      if (this.state.file !== "") {
+        data.append("file", this.state.file);
+      }
       fetchFileAsynchronous(
         PostView + this.props.post.pk + "/",
         "PATCH",
@@ -709,85 +725,84 @@ class PostEdit extends Component {
           <Modal open={visible} centered={false}>
             <Modal.Header>
               Update Post {post.header}
-              <Button
-                icon="close"
+              <Icon
+                name="close"
+                color="red"
                 onClick={this.handleModalClose}
-                circular
-                negative
-                style={{
-                  float: "right"
-                }}
+                style={{ float: "right", cursor: "pointer" }}
               />
             </Modal.Header>
             <Modal.Content>
-              <Grid columns="equal">
-                <Grid.Row>
-                  <Grid.Column />
-                  <Grid.Column textAlign="center">
-                    <Input
-                      icon="edit"
-                      type="text"
-                      name="header"
-                      iconPosition="left"
-                      placeholder="Post header"
-                      value={this.state.header}
-                      onChange={this.handleChange}
-                      style={{ marginBottom: 15 }}
-                    />
-                    <TextArea
-                      placeholder="Tell us more"
-                      name="about"
-                      value={this.state.about}
-                      onChange={this.handleChange}
-                      style={{ marginBottom: 15 }}
-                      rows={4}
-                    />
-                    <div style={{ textAlign: "center" }}>
-                      <input
-                        style={{ display: "none" }}
-                        type="file"
-                        id="postfile"
-                        onChange={e => {
-                          let file = e.target.files[0];
-                          let type = file.type.split("/")[0];
-                          if (
-                            acceptedTypes.indexOf(file.type) > -1 ||
-                            type === "image"
-                          ) {
-                            this.setState({ file: file });
-                          } else {
-                            this.props.setMessage({
-                              message:
-                                "Only image, pdf, zip files are accepted",
-                              type: 1,
-                              header: "Error"
-                            });
-                          }
-                        }}
+              <Form>
+                <Grid columns="equal">
+                  <Grid.Row>
+                    <Grid.Column />
+                    <Grid.Column textAlign="center">
+                      <Input
+                        icon="edit"
+                        type="text"
+                        name="header"
+                        iconPosition="left"
+                        placeholder="Post header"
+                        value={this.state.header}
+                        onChange={this.handleChange}
+                        style={{ marginBottom: 15 }}
                       />
-                      <label htmlFor="postfile" style={{ cursor: "pointer" }}>
-                        Update image / file{" "}
-                        {this.state.file != "" &&
-                        this.state.file.name.length >= 20
-                          ? this.state.file.name.substr(0, 19) + ".."
-                          : this.state.file.name}
-                      </label>
-                    </div>
-                    <br />
-                    <Button
-                      disabled={this.state.loading}
-                      onClick={this.HandleFormSubmit}
-                      loading={this.state.loading}
-                      secondary
-                    >
-                      Update
-                    </Button>
-                    <Divider horizontal />
-                  </Grid.Column>
+                      <TextArea
+                        placeholder="Tell us more"
+                        name="about"
+                        value={this.state.about}
+                        onChange={this.handleChange}
+                        style={{ marginBottom: 15 }}
+                        rows={4}
+                      />
+                      <div style={{ textAlign: "center" }}>
+                        <input
+                          style={{ display: "none" }}
+                          type="file"
+                          id="postfile"
+                          onChange={e => {
+                            let file = e.target.files[0];
+                            let type = file.type.split("/")[0];
+                            if (
+                              acceptedTypes.indexOf(file.type) > -1 ||
+                              type === "image"
+                            ) {
+                              this.setState({ file: file });
+                            } else {
+                              this.props.setMessage({
+                                message:
+                                  "Only image, pdf, zip files are accepted",
+                                type: 1,
+                                header: "Error"
+                              });
+                            }
+                          }}
+                        />
+                        <label htmlFor="postfile" style={{ cursor: "pointer" }}>
+                          Update image / file{" "}
+                          {this.state.file != "" &&
+                          this.state.file.name.length >= 20
+                            ? this.state.file.name.substr(0, 19) + ".."
+                            : this.state.file.name}
+                        </label>
+                      </div>
+                      <br />
+                      <Button
+                        disabled={this.state.loading}
+                        onClick={this.HandleFormSubmit}
+                        loading={this.state.loading}
+                        secondary
+                      >
+                        Update
+                      </Button>
+                      <Divider horizontal />
+                    </Grid.Column>
 
-                  <Grid.Column />
-                </Grid.Row>
-              </Grid>
+                    <Grid.Column />
+                  </Grid.Row>
+                </Grid>
+              </Form>
             </Modal.Content>
           </Modal>
         </Transition>

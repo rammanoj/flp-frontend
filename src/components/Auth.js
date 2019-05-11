@@ -131,43 +131,45 @@ class Login extends Component {
                     }}
                   >
                     <h2>Login Form</h2>
-                    <Card style={{ width: "100%", padding: 10 }}>
-                      <Input
-                        icon="users"
-                        iconPosition="left"
-                        placeholder="Username / Email"
-                        name="user"
-                        style={{ marginBottom: 15 }}
-                        value={this.state.username}
-                        onChange={this.handleChange}
-                      />
-
-                      <Input
-                        icon="lock"
-                        iconPosition="left"
-                        placeholder="Password"
-                        name="password"
-                        type="password"
-                        style={{ marginBottom: 15 }}
-                        value={this.state.password}
-                        onChange={this.handleChange}
-                      />
-                      <div style={{ justifyContent: "center" }}>
-                        <Checkbox
-                          label="Remember me"
+                    <form>
+                      <Card style={{ width: "100%", padding: 10 }}>
+                        <Input
+                          icon="users"
+                          iconPosition="left"
+                          placeholder="Username / Email"
+                          name="user"
                           style={{ marginBottom: 15 }}
-                          defaultChecked
+                          value={this.state.username}
+                          onChange={this.handleChange}
                         />
-                      </div>
-                      <Button
-                        disabled={this.state.loading}
-                        onClick={this.HandleFormSubmit}
-                        loading={this.state.loading}
-                        secondary
-                      >
-                        Login
-                      </Button>
-                    </Card>
+
+                        <Input
+                          icon="lock"
+                          iconPosition="left"
+                          placeholder="Password"
+                          name="password"
+                          type="password"
+                          style={{ marginBottom: 15 }}
+                          value={this.state.password}
+                          onChange={this.handleChange}
+                        />
+                        <div style={{ justifyContent: "center" }}>
+                          <Checkbox
+                            label="Remember me"
+                            style={{ marginBottom: 15 }}
+                            defaultChecked
+                          />
+                        </div>
+                        <Button
+                          disabled={this.state.loading}
+                          onClick={this.HandleFormSubmit}
+                          loading={this.state.loading}
+                          secondary
+                        >
+                          Login
+                        </Button>
+                      </Card>
+                    </form>
                     <Card style={{ padding: 10, width: "100%" }}>
                       <Link to="/forgotpassword">
                         Don't Remember Password ?
@@ -270,27 +272,31 @@ class ForgotPassword extends React.Component {
                     }}
                   >
                     <h2>Forgot Password ?</h2>
-                    <Card style={{ width: "100%", padding: 10 }}>
-                      <Input
-                        icon="mail"
-                        type="email"
-                        iconPosition="left"
-                        placeholder="Enter email"
-                        name="email"
-                        style={{ marginBottom: 15 }}
-                        value={this.state.email}
-                        onChange={e => this.setState({ email: e.target.value })}
-                      />
+                    <form>
+                      <Card style={{ width: "100%", padding: 10 }}>
+                        <Input
+                          icon="mail"
+                          type="email"
+                          iconPosition="left"
+                          placeholder="Enter email"
+                          name="email"
+                          style={{ marginBottom: 15 }}
+                          value={this.state.email}
+                          onChange={e =>
+                            this.setState({ email: e.target.value })
+                          }
+                        />
 
-                      <Button
-                        disabled={this.state.loading}
-                        onClick={this.HandleFormSubmit}
-                        loading={this.state.loading}
-                        secondary
-                      >
-                        Validate
-                      </Button>
-                    </Card>
+                        <Button
+                          disabled={this.state.loading}
+                          onClick={this.HandleFormSubmit}
+                          loading={this.state.loading}
+                          secondary
+                        >
+                          Validate
+                        </Button>
+                      </Card>
+                    </form>
                     <Card style={{ padding: 10, width: "100%" }}>
                       <div>
                         <Link to="/signup">Signup</Link> |{" "}
@@ -418,56 +424,58 @@ class Register extends React.Component {
                     }}
                   >
                     <h2>Signup</h2>
-                    <Card style={{ width: "100%", padding: 10 }}>
-                      <Input
-                        icon="users"
-                        type="text"
-                        iconPosition="left"
-                        placeholder="Enter Username"
-                        name="username"
-                        style={{ marginBottom: 15 }}
-                        value={this.state.username}
-                        onChange={this.handleChange}
-                      />
-                      <Input
-                        icon="mail"
-                        type="email"
-                        iconPosition="left"
-                        placeholder="Enter Email"
-                        name="email"
-                        style={{ marginBottom: 15 }}
-                        value={this.state.email}
-                        onChange={this.handleChange}
-                      />
-                      <Input
-                        icon="lock"
-                        type="password"
-                        iconPosition="left"
-                        placeholder="Enter Password"
-                        name="password"
-                        style={{ marginBottom: 15 }}
-                        value={this.state.password}
-                        onChange={this.handleChange}
-                      />
-                      <Input
-                        icon="lock"
-                        type="password"
-                        iconPosition="left"
-                        placeholder="Confirm Password"
-                        name="confirm_password"
-                        style={{ marginBottom: 15 }}
-                        value={this.state.confirm_password}
-                        onChange={this.handleChange}
-                      />
-                      <Button
-                        disabled={this.state.loading}
-                        onClick={this.HandleFormSubmit}
-                        loading={this.state.loading}
-                        secondary
-                      >
-                        Register
-                      </Button>
-                    </Card>
+                    <form>
+                      <Card style={{ width: "100%", padding: 10 }}>
+                        <Input
+                          icon="users"
+                          type="text"
+                          iconPosition="left"
+                          placeholder="Enter Username"
+                          name="username"
+                          style={{ marginBottom: 15 }}
+                          value={this.state.username}
+                          onChange={this.handleChange}
+                        />
+                        <Input
+                          icon="mail"
+                          type="email"
+                          iconPosition="left"
+                          placeholder="Enter Email"
+                          name="email"
+                          style={{ marginBottom: 15 }}
+                          value={this.state.email}
+                          onChange={this.handleChange}
+                        />
+                        <Input
+                          icon="lock"
+                          type="password"
+                          iconPosition="left"
+                          placeholder="Enter Password"
+                          name="password"
+                          style={{ marginBottom: 15 }}
+                          value={this.state.password}
+                          onChange={this.handleChange}
+                        />
+                        <Input
+                          icon="lock"
+                          type="password"
+                          iconPosition="left"
+                          placeholder="Confirm Password"
+                          name="confirm_password"
+                          style={{ marginBottom: 15 }}
+                          value={this.state.confirm_password}
+                          onChange={this.handleChange}
+                        />
+                        <Button
+                          disabled={this.state.loading}
+                          onClick={this.HandleFormSubmit}
+                          loading={this.state.loading}
+                          secondary
+                        >
+                          Register
+                        </Button>
+                      </Card>
+                    </form>
                   </div>
                 </Grid.Column>
                 <Grid.Column width={6} />

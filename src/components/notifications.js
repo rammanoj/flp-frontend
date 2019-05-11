@@ -90,26 +90,30 @@ export default class Notify extends React.Component {
                     </div>
                   ) : (
                     <Menu pointing vertical style={{ width: "99%" }}>
-                      {this.state.notifications.map((obj, index) => (
-                        <Menu.Item key={index} style={{ width: "99%" }}>
-                          {obj.text}
-                          <div style={{ float: "right" }}>
-                            <Icon
-                              name="close"
-                              size="small"
-                              style={{ cursor: "pointer" }}
-                              onClick={() => {
-                                let ntf = [...this.state.notifications];
-                                ntf.splice(index, 1);
-                                this.setState({
-                                  notifications: ntf,
-                                  emptyData: ntf.length === 0
-                                });
-                              }}
+                      <form>
+                        {this.state.notifications.map((obj, index) => (
+                          <Menu.Item key={index} style={{ width: "99%" }}>
+                            <div
+                              dangerouslySetInnerHTML={{ __html: obj.text }}
                             />
-                          </div>
-                        </Menu.Item>
-                      ))}
+                            <div style={{ float: "right" }}>
+                              <Icon
+                                name="close"
+                                size="small"
+                                style={{ cursor: "pointer" }}
+                                onClick={() => {
+                                  let ntf = [...this.state.notifications];
+                                  ntf.splice(index, 1);
+                                  this.setState({
+                                    notifications: ntf,
+                                    emptyData: ntf.length === 0
+                                  });
+                                }}
+                              />
+                            </div>
+                          </Menu.Item>
+                        ))}
+                      </form>
                     </Menu>
                   )}
                 </Fragment>

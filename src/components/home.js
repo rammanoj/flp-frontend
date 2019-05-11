@@ -79,6 +79,8 @@ class Home extends Component {
         { Authorization: "Token " + getCookie("token")[0].value },
         this.getGroupsCallback
       );
+    } else {
+      console.log("user is not loggedIn");
     }
   };
 
