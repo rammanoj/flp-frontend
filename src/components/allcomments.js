@@ -332,7 +332,12 @@ class CommentPagination extends Component {
     } else {
       let comments = [...this.state.comments];
       comments.push(response);
-      this.setState({ comments: comments, addloading: false, comment: "" });
+      this.setState({
+        comments: comments,
+        emptyresult: false,
+        addloading: false,
+        comment: ""
+      });
     }
   };
 
