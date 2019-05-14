@@ -138,6 +138,7 @@ class MessageDisplay extends Component {
     this.state = {
       message: this.props.message,
       header: "",
+      type: false,
       timeout: false
     };
     var timeout = false;
