@@ -48,7 +48,8 @@ class Home extends Component {
       },
       loader: false,
       params: Object.keys(params).length !== 0 ? params : false,
-      notFound: false
+      notFound: false,
+      redirect: false
     };
 
     this.child = React.createRef();
@@ -80,7 +81,7 @@ class Home extends Component {
         this.getGroupsCallback
       );
     } else {
-      console.log("user is not loggedIn");
+      // User is not LoggedIn
     }
   };
 
@@ -108,7 +109,11 @@ class Home extends Component {
   };
 
   handleGroupSelect = obj => {
-    this.setState({ groupSelected: obj, activeItem: obj.pk, active: false });
+    this.setState({
+      groupSelected: obj,
+      activeItem: obj.pk,
+      active: false
+    });
   };
 
   handleChange = e => {
@@ -189,9 +194,17 @@ class Home extends Component {
     if (!this.state.isLoggedIn) {
       return <Redirect to="/login" />;
     }
+
+    if (this.state.notFound) {
+      return <Redirect to="/404" />;
+    }
+
+    if (this.state.redirect) {
+      this.setState({ redirect: false, loading: true });
+      return <Redirect to="/home" />;
+    }
     return (
       <div>
-        {this.state.notFound ? <Redirect to="/404" /> : ""}
         {this.state.loading ? (
           <div>
             <Dimmer active inverted>
@@ -316,9 +329,17 @@ class Home extends Component {
                                         name={obj.name}
                                         active={activeItem === obj.pk}
                                         style={{ cursor: "pointer" }}
-                                        onClick={() =>
-                                          this.handleGroupSelect(obj)
-                                        }
+                                        onClick={() => {
+                                          // if (
+                                          //   !this.isempty(
+                                          //     this.props.match.params
+                                          //   )
+                                          // ) {
+                                          //   this.setState({ redirect: true });
+                                          // } else {
+                                          this.handleGroupSelect(obj);
+                                          // }
+                                        }}
                                       >
                                         {obj.name}
                                       </Menu.Item>

@@ -1,7 +1,18 @@
 import React, { Fragment, Component } from "react";
 import { getCookie } from "./../cookie";
 import { Link } from "react-router-dom";
-import { Menu, Segment, Message, Transition, Input } from "semantic-ui-react";
+import {
+  Menu,
+  Segment,
+  Message,
+  Transition,
+  Input,
+  Form,
+  Grid,
+  TextArea,
+  Button,
+  Icon
+} from "semantic-ui-react";
 import { red, green } from "./../../api";
 
 class NavBar extends Component {
@@ -38,19 +49,26 @@ class NavBar extends Component {
               <Menu.Item position="right">
                 <Menu inverted>
                   {this.props.hasOwnProperty("search") && this.props.search ? (
-                    <Menu.Item>
-                      <Input
-                        icon="search"
-                        type="text"
-                        iconPosition="right"
-                        placeholder="Search"
-                        value={this.state.search}
-                        onChange={e =>
-                          this.setState({ search: e.target.value })
-                        }
-                        onKeyPress={e => this.props.func(e, this.state.search)}
-                      />
-                    </Menu.Item>
+                    <Fragment>
+                      <Menu.Item>
+                        <Input
+                          icon="search"
+                          type="text"
+                          iconPosition="right"
+                          placeholder="Search"
+                          value={this.state.search}
+                          onChange={e =>
+                            this.setState({ search: e.target.value })
+                          }
+                          onKeyPress={e =>
+                            this.props.func(e, this.state.search)
+                          }
+                        />
+                      </Menu.Item>
+                      <Menu.Item>
+                        <Icon name="bell" style={{ cursor: "pointer" }} />
+                      </Menu.Item>
+                    </Fragment>
                   ) : (
                     ""
                   )}
@@ -134,7 +152,10 @@ class MessageDisplay extends Component {
         message: this.props.message,
         header: this.props.header
       });
-      this.timeout = setTimeout(() => this.setState({ message: false }), 7000);
+      this.timeout = setTimeout(
+        () => this.setState({ message: false, type: false, header: "" }),
+        7000
+      );
     }
   };
 
@@ -171,4 +192,54 @@ class MessageDisplay extends Component {
   };
 }
 
-export { NavBar, MessageDisplay };
+class CustomTextArea extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      disabled: false
+    };
+  }
+  render = () => (
+    <Form>
+      <Grid>
+        <Grid.Row>
+          <Grid.Column width={2} />
+          <Grid.Column
+            width={12}
+            style={{ border: "1px solid #dbdde0", borderRadius: 5 }}
+          >
+            <div style={{ width: "100%" }}>
+              <TextArea
+                placeholder={this.props.placeholder}
+                style={{ border: "none", resize: "none" }}
+                defaultValue={this.props.value}
+                onChange={e => {
+                  if (e.target.value === "") {
+                    this.setState({ disabled: true });
+                  } else {
+                    this.setState({ disabled: false });
+                    this.props.changeHandler(e);
+                  }
+                }}
+              />
+              <div style={{ float: "right" }}>
+                <Button
+                  secondary
+                  disabled={this.state.disabled}
+                  loading={this.props.loading}
+                  onClick={this.props.onSuccess}
+                >
+                  {this.props.button}
+                </Button>
+                <Button onClick={this.props.onCancel}>cancel</Button>
+              </div>
+            </div>
+          </Grid.Column>
+          <Grid.Column width={2} />
+        </Grid.Row>
+      </Grid>
+    </Form>
+  );
+}
+
+export { NavBar, MessageDisplay, CustomTextArea };

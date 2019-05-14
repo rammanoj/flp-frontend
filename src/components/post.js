@@ -28,7 +28,6 @@ import {
   Header,
   Popup
 } from "semantic-ui-react";
-import { BaseComment } from "./comment";
 import { CommentPagination } from "./allcomments";
 import Pagination from "semantic-ui-react-button-pagination";
 import { CopyToClipboard } from "react-copy-to-clipboard";
@@ -89,6 +88,7 @@ class BasePost extends Component {
   };
 
   setPost = obj => {
+    console.log("came here to set a post");
     let index = this.state.posts.indexOf(
       this.state.posts.find(elem => elem.pk === obj.pk)
     );
@@ -157,6 +157,7 @@ class BasePost extends Component {
   };
 
   componentDidUpdate = (prevprops, prevState) => {
+    console.log("Came here to update it");
     if (prevprops.group !== this.props.group) {
       this.setState(
         {
@@ -388,6 +389,7 @@ class BasePost extends Component {
           </Modal>
         </Transition>
         <Scrollbars style={{ height: "99%", overflowX: "hidden" }}>
+          {console.log("re rendered the component after updation")}
           {this.state.loading ? (
             <Loader active> fetching posts</Loader>
           ) : (
@@ -531,35 +533,11 @@ class BasePost extends Component {
                           animation="drop"
                         >
                           <Card.Content extra>
-                            <BaseComment
+                            <CommentPagination
                               post={obj}
                               setPost={this.setPost}
                               setMessage={this.props.setMessage}
                             />
-                            <Divider />
-                            <div style={{ textAlign: "center", width: "100%" }}>
-                              <a
-                                onClick={() => {
-                                  this.setState({ showallcomments: obj.pk });
-                                }}
-                              >
-                                View all comments
-                              </a>
-                              {this.state.showallcomments === obj.pk ? (
-                                <Fragment>
-                                  <CommentPagination
-                                    setMessage={this.props.setMessage}
-                                    post={this.state.showallcomments}
-                                    setPost={this.setPost}
-                                    setAllComment={val =>
-                                      this.setState({ showallcomments: val })
-                                    }
-                                  />
-                                </Fragment>
-                              ) : (
-                                <Fragment />
-                              )}
-                            </div>
                           </Card.Content>
                         </Transition>
                       </Card>

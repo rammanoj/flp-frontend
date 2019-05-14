@@ -9,7 +9,8 @@ import {
   Button,
   TextArea,
   Header,
-  Divider
+  Divider,
+  Form
 } from "semantic-ui-react";
 import {
   commentList,
@@ -17,12 +18,14 @@ import {
   months,
   commentApi,
   replyCreate,
-  replyUpdate
+  replyUpdate,
+  commentCreate
 } from "./../api";
 import { fetchAsynchronous } from "./controllers/fetch";
 import { getCookie } from "./cookie";
 import Pagination from "semantic-ui-react-button-pagination";
 import Scrollbars from "react-custom-scrollbars";
+import { CustomTextArea } from "./elements/nav";
 
 class CommentPagination extends Component {
   constructor(props) {
@@ -42,12 +45,13 @@ class CommentPagination extends Component {
       commentDelete: false,
       commentEdit: false,
       updatecomment: "",
-      updateloading: false,
-      recommentvisible: false,
-      recomment: "",
       recommentloading: false,
+      operation: -1,
+      customUpdatePK: false,
+      recomment: "",
       operation: 0,
-      recommentdelete: false
+      recommentdelete: false,
+      addloading: false
     };
   }
 
@@ -59,7 +63,7 @@ class CommentPagination extends Component {
 
   fetch = () => {
     fetchAsynchronous(
-      commentList + this.props.post + "/?page=" + this.state.page,
+      commentList + this.props.post.pk + "/?page=" + this.state.page,
       "GET",
       undefined,
       { Authorization: "Token " + getCookie("token")[0].value },
@@ -135,7 +139,7 @@ class CommentPagination extends Component {
   };
 
   handleCommentUpdate = () => {
-    this.setState({ updateloading: true });
+    this.setState({ recommentloading: true });
     let headers = {
       Authorization: "Token " + getCookie("token")[0].value,
       "Content-Type": "application/json"
@@ -157,7 +161,7 @@ class CommentPagination extends Component {
         type: 1,
         header: "Error"
       });
-      this.setState({ updateloading: false });
+      this.setState({ recommentloading: false });
     } else {
       let comments = [...this.state.comments];
       let index = comments.indexOf(
@@ -166,10 +170,11 @@ class CommentPagination extends Component {
       comments[index] = response;
       this.setState({
         commentEdit: false,
-        updateloading: false,
-        updatecomment: ""
+        recommentloading: false,
+        updatecomment: "",
+        customUpdatePK: false,
+        comments: comments
       });
-      this.setState({ comments: comments });
     }
   };
 
@@ -194,7 +199,7 @@ class CommentPagination extends Component {
   };
 
   addreply = () => {
-    this.setState({ reommentloading: true });
+    this.setState({ recommentloading: true });
     let headers = {
       Authorization: "Token " + getCookie("token")[0].value,
       "Content-Type": "application/json"
@@ -211,18 +216,28 @@ class CommentPagination extends Component {
   handleAddReply = response => {
     this.setState({ recommentloading: false });
     if (response.hasOwnProperty("error") && response.error === 1) {
-      this.setMessage({ message: response.message, type: 1, header: "Error" });
+      this.props.setMessage({
+        message: response.message,
+        type: 1,
+        header: "Error"
+      });
     } else {
       // Update the post
-      this.setState({ recommentvisible: false, recomment: "" });
       let comments = [...this.state.comments];
       let obj = comments.find(obj => obj.pk === this.state.pk);
-      obj.postrecomment_set.push(response);
-      this.setState({ comments: comments });
+      obj.postrecomment_set.unshift(response);
+      this.setState({
+        comments: comments,
+        recommentvisible: false,
+        recomment: "",
+        operation: -1,
+        customUpdatePK: false
+      });
     }
   };
 
   handleReplyUpdate = () => {
+    this.setState({ recommentloading: true });
     let headers = {
       Authorization: "Token " + getCookie("token")[0].value,
       "Content-Type": "application/json"
@@ -232,23 +247,34 @@ class CommentPagination extends Component {
       "PATCH",
       { re_comment: this.state.recomment },
       headers,
-      () => {}
+      response => {
+        if (response.hasOwnProperty("error") && response.error === 1) {
+          this.props.setMessage({
+            message: response.message,
+            type: 1,
+            header: "Error"
+          });
+          this.setState({ recommentloading: false });
+        } else {
+          // get the updated index of the reply and update it in the comment.
+          let comments = [...this.state.comments];
+          let comment = comments.find(obj =>
+            obj.postrecomment_set.find(elem => elem.pk === this.state.pk)
+          );
+          let reply = comment.postrecomment_set.find(
+            obj => obj.pk === this.state.pk
+          );
+          reply.re_comment = this.state.recomment;
+          this.setState({
+            comments: comments,
+            recomment: "",
+            recommentloading: false,
+            customUpdatePK: false,
+            operation: -1
+          });
+        }
+      }
     );
-
-    // get the updated index of the reply and update it in the comment.
-    let comments = [...this.state.comments];
-
-    let comment = comments.find(obj =>
-      obj.postrecomment_set.find(elem => elem.pk === this.state.pk)
-    );
-    let reply = comment.postrecomment_set.find(obj => obj.pk === this.state.pk);
-    reply.re_comment = this.state.recomment;
-    this.setState({
-      comments: comments,
-      recomment: "",
-      recommentloading: false,
-      recommentvisible: false
-    });
   };
 
   handleReplyDelete = () => {
@@ -279,138 +305,41 @@ class CommentPagination extends Component {
     });
   };
 
+  addComment = () => {
+    this.setState({ addloading: true });
+    let headers = {
+      Authorization: "Token " + getCookie("token")[0].value,
+      "Content-Type": "application/json"
+    };
+    let data = { comment: this.state.comment };
+    fetchAsynchronous(
+      commentCreate + this.props.post.pk + "/",
+      "POST",
+      data,
+      headers,
+      this.addCommentCallback
+    );
+  };
+
+  addCommentCallback = response => {
+    if (response.hasOwnProperty("error") && response.error === 1) {
+      this.props.setMessage({
+        message: response.message,
+        type: 1,
+        header: "Error"
+      });
+      this.setState({ addloading: false });
+    } else {
+      let comments = [...this.state.comments];
+      comments.push(response);
+      this.setState({ comments: comments, addloading: false, comment: "" });
+    }
+  };
+
   render = () => {
     // Display the comments with pagination.
     return (
       <Fragment>
-        {/* Modal to update comment */}
-        <Transition
-          animation="scale"
-          duration={400}
-          visible={this.state.commentEdit}
-        >
-          <Modal
-            open={this.state.commentEdit}
-            centered={false}
-            style={{ width: "50%" }}
-          >
-            <Modal.Header>
-              Update Comment ?
-              <Button
-                icon="close"
-                onClick={() =>
-                  this.setState({
-                    updatecomment: "",
-                    updateloading: false,
-                    commentEdit: false
-                  })
-                }
-                circular
-                negative
-                style={{
-                  float: "right"
-                }}
-              />
-            </Modal.Header>
-            <Modal.Content>
-              <Grid columns="equal">
-                <Grid.Row>
-                  <Grid.Column />
-                  <Grid.Column textAlign="center">
-                    <TextArea
-                      placeholder="Update comment.."
-                      value={this.state.updatecomment}
-                      onChange={e =>
-                        this.setState({ updatecomment: e.target.value })
-                      }
-                      style={{ marginBottom: 15 }}
-                      rows={4}
-                    />
-                    <Button
-                      disabled={this.state.updateloading}
-                      onClick={this.handleCommentUpdate}
-                      loading={this.state.updateloading}
-                      secondary
-                    >
-                      Update Existing
-                    </Button>
-                    <Divider horizontal />
-                  </Grid.Column>
-
-                  <Grid.Column />
-                </Grid.Row>
-              </Grid>
-            </Modal.Content>
-          </Modal>
-        </Transition>
-
-        {/* Modal to give a reply to the comment */}
-        <Transition
-          animation="scale"
-          duration={400}
-          visible={this.state.recommentvisible}
-        >
-          <Modal
-            open={this.state.recommentvisible}
-            centered={false}
-            style={{ width: "50%" }}
-          >
-            <Modal.Header>
-              {this.state.operation === 0 ? "Add Reply ?" : "Update Reply ?"}
-              <Button
-                icon="close"
-                onClick={() =>
-                  this.setState({
-                    recomment: "",
-                    recommentloading: false,
-                    recommentvisible: false
-                  })
-                }
-                circular
-                negative
-                style={{
-                  float: "right"
-                }}
-              />
-            </Modal.Header>
-            <Modal.Content>
-              <Grid columns="equal">
-                <Grid.Row>
-                  <Grid.Column />
-                  <Grid.Column textAlign="center">
-                    <TextArea
-                      placeholder="Add a reply ?.."
-                      value={this.state.recomment}
-                      onChange={e =>
-                        this.setState({ recomment: e.target.value })
-                      }
-                      style={{ marginBottom: 15 }}
-                      rows={4}
-                    />
-                    <Button
-                      disabled={this.state.recommentloading}
-                      onClick={
-                        this.state.operation === 0
-                          ? this.addreply
-                          : this.handleReplyUpdate
-                      }
-                      loading={this.state.recommentloading}
-                      secondary
-                    >
-                      {this.state.operation === 0
-                        ? "Add reply !"
-                        : "Update reply"}
-                    </Button>
-                    <Divider horizontal />
-                  </Grid.Column>
-
-                  <Grid.Column />
-                </Grid.Row>
-              </Grid>
-            </Modal.Content>
-          </Modal>
-        </Transition>
-
         {/* Alert brefore deleting the comment */}
         <Transition
           animation="scale"
@@ -470,53 +399,81 @@ class CommentPagination extends Component {
           animation="scale"
         >
           <div>
-            <Modal
-              open={this.state.visible}
-              centered={false}
-              onClose={() => {
-                this.setState({ visible: false });
-                this.props.setAllComment(false);
-              }}
-            >
-              <Modal.Header>Comments</Modal.Header>
-              <Modal.Content>
-                {this.state.loading ? (
-                  <Loader
-                    active
-                    className="workaround"
-                    size="medium"
-                    inline="centered"
-                  >
-                    getting comments..
-                  </Loader>
-                ) : (
-                  <Fragment>
-                    {this.state.emptyresult ? (
-                      <div style={{ textAlign: "center" }}>
-                        <h4>There are no comments yet</h4>
-                      </div>
-                    ) : (
-                      <div>
-                        <Scrollbars style={{ height: "45vh" }}>
-                          <Comment.Group>
-                            {this.state.comments.map((obj, index) => (
-                              <Comment key={index}>
-                                <Comment.Content>
-                                  <Icon name="user" circular inverted />
-                                  <Comment.Author as="a">
-                                    {obj.user}
-                                  </Comment.Author>
-                                  <Comment.Metadata>
-                                    <div>{this.formatTime(obj.created_on)}</div>
-                                  </Comment.Metadata>
-                                  <Comment.Text>{obj.comment}</Comment.Text>
-                                  <Comment.Actions>
+            <Comment.Group>
+              <Header as="h3" dividing>
+                Comments
+              </Header>
+              {this.state.loading ? (
+                <Loader
+                  active
+                  className="workaround"
+                  size="medium"
+                  inline="centered"
+                >
+                  getting comments..
+                </Loader>
+              ) : (
+                <Fragment>
+                  {this.state.emptyresult ? (
+                    <div style={{ textAlign: "center" }}>
+                      <h4>No comments yet</h4>
+                    </div>
+                  ) : (
+                    <div>
+                      <Comment.Group>
+                        {this.state.comments.map((obj, index) => (
+                          <Comment key={index}>
+                            <Comment.Content>
+                              <Icon name="user" circular inverted />
+                              <Comment.Author as="a">{obj.user}</Comment.Author>
+                              <Comment.Metadata>
+                                <div>{this.formatTime(obj.created_on)}</div>
+                              </Comment.Metadata>
+                              <Comment.Text>
+                                {this.state.commentEdit &&
+                                this.state.customUpdatePK === obj.pk ? (
+                                  <Fragment>
+                                    <CustomTextArea
+                                      changeHandler={e =>
+                                        this.setState({
+                                          updatecomment: e.target.value
+                                        })
+                                      }
+                                      value={this.state.updatecomment}
+                                      placeholder={"Update the comment"}
+                                      loading={this.state.recommentloading}
+                                      onSuccess={this.handleCommentUpdate}
+                                      onCancel={() =>
+                                        this.setState({
+                                          updatecomment: "",
+                                          recommentloading: false,
+                                          commentEdit: false,
+                                          customUpdatePK: false
+                                        })
+                                      }
+                                      button="Update"
+                                    />
+                                  </Fragment>
+                                ) : (
+                                  <Fragment>{obj.comment}</Fragment>
+                                )}
+                              </Comment.Text>
+                              <Comment.Actions>
+                                {(this.state.commentEdit &&
+                                  this.state.customUpdatePK === obj.pk) ||
+                                (this.state.operation === 0 &&
+                                  this.state.customUpdatePK === obj.pk) ? (
+                                  ""
+                                ) : (
+                                  <Fragment>
                                     <Comment.Action
                                       onClick={() =>
                                         this.setState({
-                                          recommentvisible: true,
                                           pk: obj.pk,
-                                          operation: 0
+                                          operation: 0,
+                                          commentEdit: false,
+                                          customUpdatePK: obj.pk,
+                                          recomment: ""
                                         })
                                       }
                                     >
@@ -529,7 +486,10 @@ class CommentPagination extends Component {
                                             this.setState({
                                               commentEdit: true,
                                               updatecomment: obj.comment,
-                                              pk: obj.pk
+                                              pk: obj.pk,
+                                              customUpdatePK: obj.pk,
+                                              operation: -1,
+                                              recomment: ""
                                             })
                                           }
                                         >
@@ -549,34 +509,95 @@ class CommentPagination extends Component {
                                     ) : (
                                       ""
                                     )}
-                                  </Comment.Actions>
-                                </Comment.Content>
-                                <Comment.Group>
-                                  {obj.postrecomment_set.map((elem, ind) => (
-                                    <Comment key={ind}>
-                                      <Comment.Content>
-                                        <Icon name="user" circular inverted />
-                                        <Comment.Author as="a">
-                                          {elem.user}
-                                        </Comment.Author>
-                                        <Comment.Metadata>
-                                          <div>
-                                            {this.formatTime(elem.created_on)}
-                                          </div>
-                                        </Comment.Metadata>
-                                        <Comment.Text>
-                                          {elem.re_comment}
-                                        </Comment.Text>
-                                        <Comment.Actions>
+                                  </Fragment>
+                                )}
+                              </Comment.Actions>
+                            </Comment.Content>
+                            {this.state.operation === 0 &&
+                            this.state.customUpdatePK === obj.pk ? (
+                              <Fragment>
+                                <CustomTextArea
+                                  changeHandler={e =>
+                                    this.setState({
+                                      recomment: e.target.value
+                                    })
+                                  }
+                                  value={this.state.recomment}
+                                  placeholder={"Add Reply..."}
+                                  loading={this.state.recommentloading}
+                                  onSuccess={this.addreply}
+                                  onCancel={() =>
+                                    this.setState({
+                                      recomment: "",
+                                      recommentloading: false,
+                                      operation: -1,
+                                      customUpdatePK: false
+                                    })
+                                  }
+                                  button="Add reply"
+                                />
+                              </Fragment>
+                            ) : (
+                              ""
+                            )}
+                            <Comment.Group>
+                              {obj.postrecomment_set.map((elem, ind) => (
+                                <Comment key={ind}>
+                                  <Comment.Content>
+                                    <Icon name="user" circular inverted />
+                                    <Comment.Author as="a">
+                                      {elem.user}
+                                    </Comment.Author>
+                                    <Comment.Metadata>
+                                      <div>
+                                        {this.formatTime(elem.created_on)}
+                                      </div>
+                                    </Comment.Metadata>
+                                    {this.state.operation === 1 &&
+                                    this.state.customUpdatePK === elem.pk ? (
+                                      <Fragment>
+                                        <CustomTextArea
+                                          changeHandler={e =>
+                                            this.setState({
+                                              recomment: e.target.value
+                                            })
+                                          }
+                                          value={this.state.recomment}
+                                          placeholder={"Update Reply..."}
+                                          loading={this.state.recommentloading}
+                                          onSuccess={this.handleReplyUpdate}
+                                          onCancel={() =>
+                                            this.setState({
+                                              recomment: "",
+                                              recommentloading: false,
+                                              operation: -1,
+                                              customUpdatePK: false
+                                            })
+                                          }
+                                          button="Update"
+                                        />
+                                      </Fragment>
+                                    ) : (
+                                      <Comment.Text>
+                                        {elem.re_comment}
+                                      </Comment.Text>
+                                    )}
+
+                                    <Comment.Actions>
+                                      {this.state.operation === 1 &&
+                                      this.state.customUpdatePK === elem.pk ? (
+                                        ""
+                                      ) : (
+                                        <Fragment>
                                           {elem.edit ? (
                                             <Fragment>
                                               <Comment.Action
                                                 onClick={() =>
                                                   this.setState({
-                                                    recommentvisible: true,
                                                     pk: elem.pk,
                                                     recomment: elem.re_comment,
-                                                    operation: 1
+                                                    operation: 1,
+                                                    customUpdatePK: elem.pk
                                                   })
                                                 }
                                               >
@@ -596,42 +617,58 @@ class CommentPagination extends Component {
                                           ) : (
                                             ""
                                           )}
-                                        </Comment.Actions>
-                                      </Comment.Content>
-                                    </Comment>
-                                  ))}
-                                </Comment.Group>
-                              </Comment>
-                            ))}
-                          </Comment.Group>
-                        </Scrollbars>
-                        {this.state.pagination ? (
-                          <div
-                            style={{
-                              marginTop: 30,
-                              marginBottom: 20,
+                                        </Fragment>
+                                      )}
+                                    </Comment.Actions>
+                                  </Comment.Content>
+                                </Comment>
+                              ))}
+                            </Comment.Group>
+                          </Comment>
+                        ))}
+                      </Comment.Group>
+                      {this.state.pagination ? (
+                        <div
+                          style={{
+                            marginTop: 10,
+                            marginBottom: 10,
 
-                              textAlign: "center"
-                            }}
-                          >
-                            <Pagination
-                              limit={paginationCount}
-                              offset={this.state.offset}
-                              total={this.state.items}
-                              onClick={(e, props, offset) =>
-                                this.handlePageClick(offset)
-                              }
-                            />
-                          </div>
-                        ) : (
-                          ""
-                        )}
-                      </div>
-                    )}
-                  </Fragment>
-                )}
-              </Modal.Content>
-            </Modal>
+                            textAlign: "center"
+                          }}
+                        >
+                          <Pagination
+                            limit={paginationCount}
+                            offset={this.state.offset}
+                            total={this.state.items}
+                            onClick={(e, props, offset) =>
+                              this.handlePageClick(offset)
+                            }
+                          />
+                        </div>
+                      ) : (
+                        ""
+                      )}
+                    </div>
+                  )}
+                </Fragment>
+              )}
+              <Form reply>
+                <Form.TextArea
+                  placeholder="Comment here.."
+                  value={this.state.comment}
+                  onChange={e => this.setState({ comment: e.target.value })}
+                />
+                <Button
+                  content="Add Comment"
+                  labelPosition="left"
+                  icon="edit"
+                  primary
+                  disabled={this.state.addloading}
+                  loading={this.state.addloading}
+                  onClick={this.addComment}
+                />
+              </Form>
+            </Comment.Group>
           </div>
         </Transition>
       </Fragment>
