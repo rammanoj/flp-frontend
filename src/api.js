@@ -1,4 +1,4 @@
-const BASE_API_URI = "http://52.14.193.169/";
+const BASE_API_URI = "http://127.0.0.1:8000/";
 
 // method: POST
 export const signup = BASE_API_URI + "accounts/signup/";
@@ -46,6 +46,10 @@ export const replyCreate = BASE_API_URI + "recomment/";
 export const replyUpdate = BASE_API_URI + "recomment/update/";
 // method: GET
 export const notifyListView = BASE_API_URI + "<group_pk>/notifications/";
+// method: POST
+export const subGroupCreate = BASE_API_URI + "subgroup/create/";
+// method: GET, PATCH, DELETE
+export const subGroupUpdate = BASE_API_URI + "subgroup/";
 
 /* Pagination Count */
 

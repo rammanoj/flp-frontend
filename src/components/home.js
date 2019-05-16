@@ -12,12 +12,19 @@ import {
   Modal,
   Input,
   TextArea,
-  Header
+  Header,
+  Form
 } from "semantic-ui-react";
 import { Redirect } from "react-router-dom";
 import { getCookie } from "./cookie";
 import { NavBar, MessageDisplay } from "./elements/nav";
-import { GroupListView, GroupCreateView, TeamAddRemoveUser } from "./../api";
+import {
+  GroupListView,
+  GroupCreateView,
+  TeamAddRemoveUser,
+  subGroupCreate,
+  subGroupUpdate
+} from "./../api";
 import { fetchAsynchronous } from "./controllers/fetch";
 import { Scrollbars } from "react-custom-scrollbars";
 import { BasePost } from "./post";
@@ -40,7 +47,9 @@ class Home extends Component {
       groupname: "",
       groupabout: "",
       visible: false,
+      subgroup: {},
       formloading: false,
+      renderpost: false,
       message: {
         message: false,
         header: "",
@@ -64,11 +73,45 @@ class Home extends Component {
   };
 
   isempty = arg => {
-    return Object.entries(arg).length === 0;
+    if (arg instanceof Object) {
+      return Object.entries(arg).length === 0;
+    }
+    return true;
   };
 
   setLoader = value => {
     this.setState({ loader: value });
+  };
+
+  set = obj => {
+    this.setState(obj);
+  };
+
+  componentDidUpdate = (prevprops, prestate) => {
+    if (prevprops.match.params !== this.props.match.params) {
+      this.setState(
+        { params: this.props.match.params, redirect: false },
+        () => {
+          let obj = this.state.groups.find(ob => {
+            return ob.pk === parseInt(this.state.params.group);
+          });
+          if (obj === undefined) {
+            this.setState({ notFound: true });
+          } else {
+            let subgroup = obj.subgroup_set.find(
+              elem => elem.pk === parseInt(this.state.params.subgroup)
+            );
+            if (subgroup === undefined) {
+              this.setState({ notFound: true });
+            } else {
+              this.setState({
+                subgroup: subgroup
+              });
+            }
+          }
+        }
+      );
+    }
   };
 
   componentDidMount = () => {
@@ -95,12 +138,24 @@ class Home extends Component {
         () => {
           if (this.state.params) {
             let obj = this.state.groups.find(
-              obj => obj.pk == this.state.params.group
+              obj => obj.pk === parseInt(this.state.params.group)
             );
             if (obj === undefined) {
               this.setState({ notFound: true });
             } else {
-              this.handleGroupSelect(obj);
+              let subgroup = obj.subgroup_set.find(
+                elem => elem.pk === parseInt(this.state.params.subgroup)
+              );
+              if (subgroup === undefined) {
+                this.setState({ notFound: true });
+              } else {
+                this.setState({
+                  groupSelected: obj,
+                  activeItem: obj.pk,
+                  active: false,
+                  subgroup: subgroup
+                });
+              }
             }
           }
         }
@@ -112,7 +167,8 @@ class Home extends Component {
     this.setState({
       groupSelected: obj,
       activeItem: obj.pk,
-      active: false
+      active: false,
+      subgroup: {}
     });
   };
 
@@ -190,18 +246,26 @@ class Home extends Component {
   };
 
   render() {
-    let { groupSelected: group, active, activeItem, visible } = this.state;
+    let {
+      groupSelected: group,
+      active,
+      activeItem,
+      visible,
+      subgroup
+    } = this.state;
+    console.log("came to render to render the component");
+    console.log(this.state);
     if (!this.state.isLoggedIn) {
       return <Redirect to="/login" />;
     }
 
     if (this.state.notFound) {
+      this.setState({ notFound: false });
       return <Redirect to="/404" />;
     }
 
     if (this.state.redirect) {
-      this.setState({ redirect: false, loading: true });
-      return <Redirect to="/home" />;
+      return <Redirect to={this.state.redirect} />;
     }
     return (
       <div>
@@ -245,49 +309,50 @@ class Home extends Component {
                   />
                 </Modal.Header>
                 <Modal.Content>
-                  <Grid columns="equal">
-                    <Grid.Row>
-                      <Grid.Column />
-                      <Grid.Column textAlign="center">
-                        {" "}
-                        <Input
-                          icon="users"
-                          type="text"
-                          name="groupname"
-                          iconPosition="left"
-                          placeholder="Group Name"
-                          value={this.state.gorupname}
-                          onChange={this.handleChange}
-                          style={{ marginBottom: 15 }}
-                        />
-                        <TextArea
-                          placeholder="Tell us more"
-                          name="groupabout"
-                          value={this.state.groupabout}
-                          onChange={this.handleChange}
-                          style={{ marginBottom: 15 }}
-                          rows={4}
-                        />
-                        <Button
-                          disabled={this.state.formloading}
-                          onClick={this.HandleFormSubmit}
-                          loading={this.state.formloading}
-                          secondary
-                        >
-                          Add new
-                        </Button>
-                        <Divider horizontal />
-                      </Grid.Column>
+                  <Form>
+                    <Grid columns="equal">
+                      <Grid.Row>
+                        <Grid.Column />
+                        <Grid.Column textAlign="center">
+                          <Input
+                            icon="users"
+                            type="text"
+                            name="groupname"
+                            iconPosition="left"
+                            placeholder="Group Name"
+                            value={this.state.gorupname}
+                            onChange={this.handleChange}
+                            style={{ marginBottom: 15 }}
+                          />
+                          <TextArea
+                            placeholder="Tell us more"
+                            name="groupabout"
+                            value={this.state.groupabout}
+                            onChange={this.handleChange}
+                            style={{ marginBottom: 15 }}
+                            rows={4}
+                          />
+                          <Button
+                            disabled={this.state.formloading}
+                            onClick={this.HandleFormSubmit}
+                            loading={this.state.formloading}
+                            secondary
+                          >
+                            Add new
+                          </Button>
+                          <Divider horizontal />
+                        </Grid.Column>
 
-                      <Grid.Column />
-                    </Grid.Row>
-                  </Grid>
+                        <Grid.Column />
+                      </Grid.Row>
+                    </Grid>
+                  </Form>
                 </Modal.Content>
               </Modal>
             </Transition>
             <Grid celled="internally" style={{ height: "83%" }}>
               <Grid.Row style={{ height: "83vh" }}>
-                <Grid.Column width={4}>
+                <Grid.Column computer={4} mobile={16}>
                   <Scrollbars
                     style={{
                       height: "99%",
@@ -330,15 +395,7 @@ class Home extends Component {
                                         active={activeItem === obj.pk}
                                         style={{ cursor: "pointer" }}
                                         onClick={() => {
-                                          // if (
-                                          //   !this.isempty(
-                                          //     this.props.match.params
-                                          //   )
-                                          // ) {
-                                          //   this.setState({ redirect: true });
-                                          // } else {
                                           this.handleGroupSelect(obj);
-                                          // }
                                         }}
                                       >
                                         {obj.name}
@@ -372,6 +429,10 @@ class Home extends Component {
                       <Fragment>
                         <GroupSelected
                           group={group}
+                          params={this.state.params}
+                          renderpost={this.state.renderpost}
+                          subgroup={subgroup}
+                          set={this.set}
                           setLoader={this.setLoader}
                           updateGroup={this.updateGroup}
                           setMessage={this.setMessage}
@@ -382,7 +443,7 @@ class Home extends Component {
                   </Scrollbars>
                 </Grid.Column>
 
-                <Grid.Column width={8}>
+                <Grid.Column computer={8} mobile={16}>
                   {this.isempty(group) ? (
                     <div
                       style={{
@@ -408,21 +469,37 @@ class Home extends Component {
                       <h2>Create a new Group</h2>
                     </div>
                   ) : (
-                    <BasePost
-                      ref={this.child}
-                      setLoader={this.setLoader}
-                      group={this.state.groupSelected}
-                      setMessage={this.setMessage}
-                      params={
-                        this.state.params !== false
-                          ? this.state.params.post
-                          : false
-                      }
-                    />
+                    <Fragment>
+                      {this.isempty(subgroup) ? (
+                        <Fragment>
+                          <div
+                            style={{
+                              marginTop: "calc(100px + 15vh)",
+                              textAlign: "center"
+                            }}
+                          >
+                            <h2>Select a SubGroup to display the posts</h2>
+                          </div>
+                        </Fragment>
+                      ) : (
+                        <BasePost
+                          ref={this.child}
+                          renderpost={this.state.renderpost}
+                          setLoader={this.setLoader}
+                          group={this.state.subgroup}
+                          setMessage={this.setMessage}
+                          params={
+                            this.state.params !== false
+                              ? this.state.params.post
+                              : false
+                          }
+                        />
+                      )}
+                    </Fragment>
                   )}
                 </Grid.Column>
 
-                <Grid.Column width={4}>
+                <Grid.Column computer={4} mobile={16}>
                   {this.isempty(group) ? (
                     ""
                   ) : (
@@ -431,7 +508,7 @@ class Home extends Component {
                         height: "99%"
                       }}
                     >
-                      <Notify group={group} />
+                      <Notify group={group} set={this.set} />
                       <UserList group={group} />
                       <Invite group={group} setMessage={this.setMessage} />
                     </Scrollbars>
@@ -460,16 +537,46 @@ class GroupSelected extends Component {
       message: { message: false, header: "", type: 1 },
       alertAction: 0,
       alertMessage: "",
-      alertvisible: false
+      alertvisible: false,
+      active: false,
+      activeItem:
+        Object.entries(this.props.params).length !== 0
+          ? parseInt(this.props.params.subgroup)
+          : "",
+      name: "",
+      subgroupdel: false,
+      subgroupupdate: false
     };
   }
 
   componentDidUpdate = (prevProps, prevState) => {
-    if (this.props.group != prevProps.group) {
+    if (this.props.group !== prevProps.group) {
       this.setState({
         group: this.props.group,
         groupname: this.props.group.name,
-        groupabout: this.props.group.about
+        groupabout: this.props.group.about,
+        active: false,
+        activeItem:
+          Object.entries(this.props.params).length !== 0
+            ? parseInt(this.props.params.subgroup)
+            : ""
+      });
+    }
+
+    if (prevProps.params !== this.props.params) {
+      if (Object.entries(this.props.params).length !== 0) {
+        this.setState({
+          active: false,
+          activeItem: this.props.params.subgroup
+        });
+      } else {
+        this.setState({ active: false, activeItem: "" });
+      }
+      this.props.set({
+        subgroup: this.state.group.subgroup_set.find(
+          obj => obj.pk === this.props.params.subgroup
+        ),
+        renderpost: !this.props.renderpost
       });
     }
   };
@@ -591,8 +698,131 @@ class GroupSelected extends Component {
     this.props.removeGroup();
   };
 
+  handleSubGroupSelect = obj => {
+    this.setState({
+      activeItem: obj.pk,
+      active: false
+    });
+    this.props.set({ subgroup: obj, renderpost: !this.props.renderpost });
+  };
+
+  handleSubGroupCreate = () => {
+    let headers = {
+      Authorization: "Token " + getCookie("token")[0].value,
+      "Content-Type": "application/json"
+    };
+
+    this.setState({
+      formloading: true,
+      message: { message: false, header: "", type: 1 }
+    });
+    fetchAsynchronous(
+      subGroupCreate + this.state.group.pk + "/",
+      "POST",
+      { name: this.state.name },
+      headers,
+      response => {
+        if (response.hasOwnProperty("error") && response.error === 1) {
+          this.props.setMessage({
+            message: response.message,
+            type: 1,
+            header: "Error"
+          });
+          this.setState({ formloading: false });
+        } else {
+          let group = Object.assign({}, this.state.group);
+          this.setState({
+            name: "",
+            operation: -1,
+            formloading: false,
+            subgroupupdate: false
+          });
+          group.subgroup_set.unshift(response);
+          this.props.set({ groupSelected: group });
+
+          this.props.setMessage({
+            message: "Successfully created a new subgroup",
+            header: "Success",
+            type: 0
+          });
+        }
+      }
+    );
+  };
+
+  handleSubgroupDelete = () => {
+    this.setState({ subgroupdel: false });
+    this.props.setLoader(true);
+    fetchAsynchronous(
+      subGroupUpdate + this.props.subgroup.pk + "/",
+      "DELETE",
+      undefined,
+      { Authorization: "Token " + getCookie("token")[0].value },
+      response => {
+        this.props.setMessage({
+          message: response.message,
+          header: response.error === 0 ? "Success" : "Error",
+          type: response.error === 0 ? 0 : 1
+        });
+        this.props.setLoader(false);
+        let group = Object.assign({}, this.state.group);
+        let index = group.subgroup_set.indexOf(this.props.subgroup);
+        group.subgroup_set.splice(index, 1);
+        this.props.set({ groupSelected: group, subgroup: {} });
+      }
+    );
+  };
+
+  handleSubgroupUpdate = () => {
+    let headers = {
+      Authorization: "Token " + getCookie("token")[0].value,
+      "Content-Type": "application/json"
+    };
+
+    this.setState({
+      formloading: true,
+      message: { message: false, header: "", type: 1 }
+    });
+    fetchAsynchronous(
+      subGroupUpdate + this.props.subgroup.pk + "/",
+      "PATCH",
+      { name: this.state.name },
+      headers,
+      response => {
+        if (response.hasOwnProperty("error") && response.error === 1) {
+          this.props.setMessage({
+            message: response.message,
+            type: 1,
+            header: "Error"
+          });
+          this.setState({ formloading: false });
+        } else {
+          let group = Object.assign({}, this.state.group);
+          this.setState({
+            name: "",
+            operation: -1,
+            formloading: false,
+            subgroupupdate: false
+          });
+          let index = group.subgroup_set.indexOf(
+            group.subgroup_set.find(obj => obj.pk === response.pk)
+          );
+          group.subgroup_set[index] = response;
+          this.props.set({ groupSelected: group });
+
+          this.props.setMessage({
+            message: "Successfully updated the name of subgroup",
+            header: "Success",
+            type: 0
+          });
+        }
+      }
+    );
+  };
+
   render = () => {
-    let { group, modalvisible, alertvisible } = this.state;
+    let { group, modalvisible, alertvisible, activeItem, active } = this.state;
+
     return (
       <Fragment>
         {this.state.alertloading ? (
@@ -602,6 +832,104 @@ class GroupSelected extends Component {
         ) : (
           ""
         )}
+        <Transition
+          animation="scale"
+          duration={400}
+          visible={this.state.subgroupdel}
+        >
+          <Modal open={this.state.subgroupdel} basic size="small">
+            <Header icon="exclamation triangle" content="Are you sure ?" />
+            <Modal.Content>
+              <p>
+                On deleting the subgroup all the posts in the subgroup will be
+                lost. This action is invertible!!
+              </p>
+            </Modal.Content>
+            <Modal.Actions>
+              <Button
+                basic
+                color="red"
+                inverted
+                onClick={() => this.setState({ subgroupdel: false })}
+              >
+                <Icon name="remove" /> No
+              </Button>
+              <Button
+                color="green"
+                inverted
+                onClick={this.handleSubgroupDelete}
+              >
+                <Icon name="checkmark" /> Yes
+              </Button>
+            </Modal.Actions>
+          </Modal>
+        </Transition>
+        <Transition
+          animation="scale"
+          duration={400}
+          visible={this.state.subgroupupdate}
+        >
+          <Modal open={this.state.subgroupupdate} centered={false}>
+            <Modal.Header>
+              {this.state.operation === 0
+                ? "Create SubGroup"
+                : "Update Subgroup"}
+              <Button
+                icon="close"
+                onClick={() => {
+                  this.setState({
+                    subgroupupdate: false,
+                    operation: -1,
+                    name: "",
+                    formloading: false
+                  });
+                }}
+                circular
+                negative
+                style={{
+                  float: "right"
+                }}
+              />
+            </Modal.Header>
+            <Modal.Content>
+              <Grid columns="equal">
+                <Grid.Row>
+                  <Grid.Column />
+                  <Grid.Column textAlign="center">
+                    <Input
+                      icon="users"
+                      type="text"
+                      name="name"
+                      iconPosition="left"
+                      placeholder="Subgroup Name"
+                      value={this.state.name}
+                      onChange={this.handleChange}
+                      style={{ marginBottom: 15 }}
+                    />
+                    <Button
+                      disabled={this.state.formloading}
+                      onClick={
+                        this.state.operation === 0
+                          ? this.handleSubGroupCreate
+                          : this.handleSubgroupUpdate
+                      }
+                      loading={this.state.formloading}
+                      secondary
+                    >
+                      {this.state.operation === 0
+                        ? "Create Subgroup"
+                        : "Update Subgroup"}
+                    </Button>
+                    <Divider horizontal />
+                  </Grid.Column>
+
+                  <Grid.Column />
+                </Grid.Row>
+              </Grid>
+            </Modal.Content>
+          </Modal>
+        </Transition>
+
         <Transition animation="scale" duration={400} visible={alertvisible}>
           <Modal open={alertvisible} basic size="small">
             <Header icon="exclamation triangle" content="Are you sure ?" />
@@ -617,12 +945,17 @@ class GroupSelected extends Component {
               >
                 <Icon name="remove" /> No
               </Button>
-              <Button color="green" inverted onClick={this.handleAlertClick}>
+              <Button
+                color="green"
+                inverted
+                onClick={this.handleSubgroupDelete}
+              >
                 <Icon name="checkmark" /> Yes
               </Button>
             </Modal.Actions>
           </Modal>
         </Transition>
+
         <Transition animation="scale" duration={400} visible={modalvisible}>
           <Modal open={modalvisible} centered={false}>
             <Modal.Header>
@@ -707,9 +1040,101 @@ class GroupSelected extends Component {
             ) : (
               ""
             )}
-            <h5>About: </h5>
+            <Accordion>
+              <Accordion.Title
+                active={active}
+                index={0}
+                onClick={() =>
+                  this.setState({
+                    active: active ? false : true
+                  })
+                }
+              >
+                <Icon name="users" />
+                Sub-Groups <Icon name="dropdown" />
+              </Accordion.Title>
+              <Transition animation="drop" duration={500} visible={active}>
+                <Accordion.Content active={active}>
+                  <div style={{ width: "auto", textAlign: "center" }}>
+                    <Scrollbars style={{ height: "25vh" }}>
+                      <Menu vertical style={{ width: "100%" }}>
+                        <React.Fragment>
+                          {group.subgroup_set.map((obj, index) => (
+                            <Menu.Item
+                              key={index}
+                              name={obj.name}
+                              active={activeItem === obj.pk}
+                              style={{ cursor: "pointer" }}
+                              onClick={() => {
+                                this.handleSubGroupSelect(obj);
+                              }}
+                            >
+                              {obj.name}
+                            </Menu.Item>
+                          ))}
+                        </React.Fragment>
+                      </Menu>
+                    </Scrollbars>
+                  </div>
+                </Accordion.Content>
+              </Transition>
+            </Accordion>
+            <Button
+              secondary
+              style={{ width: "90%" }}
+              onClick={() => {
+                this.setState({
+                  subgroupupdate: true,
+                  name: "",
+                  formloading: false,
+                  operation: 0
+                });
+                this.props.setMessage({ message: false, header: "", type: 1 });
+              }}
+            >
+              <Icon name="add" />
+              Add new SubGroup
+            </Button>
+            <br />
+            <br />
+            {Object.entries(this.props.subgroup).length !== 0 ? (
+              <Button.Group style={{ width: "90%" }}>
+                <Button
+                  onClick={() => {
+                    this.setState({
+                      formloading: false,
+                      operation: 1,
+                      subgroupupdate: true,
+                      name: this.props.subgroup.name
+                    });
+                    let message = {
+                      message: false,
+                      header: "",
+                      type: ""
+                    };
+                    this.props.setMessage(message);
+                  }}
+                >
+                  Update
+                </Button>
+                <Button.Or style={{ color: "black" }} />
+                <Button
+                  onClick={() =>
+                    this.setState({
+                      subgroupdel: true
+                    })
+                  }
+                  negative
+                >
+                  Delete
+                </Button>
+              </Button.Group>
+            ) : (
+              ""
+            )}
+            <h5>About Group: </h5>
             <p style={{ width: "90%" }}>{group.about}</p>
-            <h5>Created By: </h5>
+            <h5>Group Created By: </h5>
             <p>{group.created_by}</p>
             {!group.edit ? (
               <Fragment>

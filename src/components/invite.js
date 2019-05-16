@@ -6,7 +6,6 @@ import {
   Modal,
   Transition,
   Input,
-  Header,
   Label,
   Button,
   Icon,

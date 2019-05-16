@@ -5,11 +5,8 @@ import {
   Icon,
   Loader,
   Comment,
-  Grid,
   Button,
-  TextArea,
   Header,
-  Divider,
   Form
 } from "semantic-ui-react";
 import {
@@ -24,7 +21,6 @@ import {
 import { fetchAsynchronous } from "./controllers/fetch";
 import { getCookie } from "./cookie";
 import Pagination from "semantic-ui-react-button-pagination";
-import Scrollbars from "react-custom-scrollbars";
 import { CustomTextArea } from "./elements/nav";
 
 class CommentPagination extends Component {
@@ -37,7 +33,6 @@ class CommentPagination extends Component {
       comments: [],
       page: 1,
       emptyresult: false,
-      pagination: false,
       offset: 0,
       items: 0,
       pk: "",
@@ -49,7 +44,6 @@ class CommentPagination extends Component {
       operation: -1,
       customUpdatePK: false,
       recomment: "",
-      operation: 0,
       recommentdelete: false,
       addloading: false
     };

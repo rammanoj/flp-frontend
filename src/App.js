@@ -29,7 +29,11 @@ class App extends Component {
           {/* Home page */}
           <Route exact path="/home" component={Home} />
           {/* Post link */}
-          <Route exact path="/group/:group/post/:post" component={Home} />
+          <Route
+            exact
+            path="/group/:group/:subgroup/post/:post"
+            component={Home}
+          />
           {/* 404 Handler */}
           <Route component={NotFound} />
         </Switch>

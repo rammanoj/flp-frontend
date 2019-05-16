@@ -10,7 +10,7 @@ import {
   Input,
   Button
 } from "semantic-ui-react";
-import { profile, passwordUpdate, green, red } from "./../api";
+import { profile, passwordUpdate } from "./../api";
 import { fetchAsynchronous } from "./controllers/fetch";
 import { Redirect } from "react-router-dom";
 

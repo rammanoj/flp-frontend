@@ -61,7 +61,7 @@ class BasePost extends Component {
   onsearchEnter = (e, searchvalue) => {
     if (e.key === "Enter") {
       let uri;
-      if (searchvalue != "") {
+      if (searchvalue !== "") {
         uri =
           PostListView +
           this.state.group.pk +
@@ -88,7 +88,6 @@ class BasePost extends Component {
   };
 
   setPost = obj => {
-    console.log("came here to set a post");
     let index = this.state.posts.indexOf(
       this.state.posts.find(elem => elem.pk === obj.pk)
     );
@@ -157,7 +156,6 @@ class BasePost extends Component {
   };
 
   componentDidUpdate = (prevprops, prevState) => {
-    console.log("Came here to update it");
     if (prevprops.group !== this.props.group) {
       this.setState(
         {
@@ -169,6 +167,26 @@ class BasePost extends Component {
         },
         () => this.getList(PostListView + this.props.group.pk + "/?page=" + 1)
       );
+    }
+
+    if (prevprops.renderpost !== this.props.renderpost) {
+      if (this.props.params !== prevprops.params) {
+        let uri =
+          PostListView +
+          this.state.group.pk +
+          "/?name=pk&search=" +
+          this.props.params +
+          "&page=" +
+          this.state.page;
+        this.setState(
+          { page: 1, posts: [], loading: true, pksearch: this.props.params },
+          () => this.getList(uri)
+        );
+      } else {
+        this.setState({ page: 1, posts: [], loading: true }, () =>
+          this.getList(PostListView + this.props.group.pk + "/?page=" + 1)
+        );
+      }
     }
   };
 
@@ -183,7 +201,7 @@ class BasePost extends Component {
     this.props.setMessage({ message: false, header: "", type: 0 });
 
     let data = new FormData();
-    data.append("team", this.state.group.pk);
+    data.append("group", this.state.group.pk);
     data.append("header", this.state.header);
     data.append("about", this.state.about);
     if (this.state.file !== "") {
@@ -363,7 +381,7 @@ class BasePost extends Component {
                         />
                         <label htmlFor="postfile" style={{ cursor: "pointer" }}>
                           Add image / file{" "}
-                          {this.state.file != "" &&
+                          {this.state.file !== "" &&
                           this.state.file.name.length >= 20
                             ? this.state.file.name.substr(0, 19) + ".."
                             : this.state.file.name}
@@ -389,7 +407,6 @@ class BasePost extends Component {
           </Modal>
         </Transition>
         <Scrollbars style={{ height: "99%", overflowX: "hidden" }}>
-          {console.log("re rendered the component after updation")}
           {this.state.loading ? (
             <Loader active> fetching posts</Loader>
           ) : (
