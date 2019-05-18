@@ -54,7 +54,9 @@ class BasePost extends Component {
       items: 0,
       pagination: false,
       searchvalue: "",
-      pksearch: this.props.params
+      pksearch: false,
+      tags: [],
+      tag: ""
     };
   }
 
@@ -108,10 +110,9 @@ class BasePost extends Component {
 
   componentDidMount = () => {
     let uri = PostListView + this.state.group.pk + "/";
-    if (this.state.pksearch !== false) {
+    if (this.props.pksearch !== false) {
       uri +=
-        "?name=pk&search=" + this.state.pksearch + "&page=" + this.state.page;
-      this.setState({ pksearch: false });
+        "?name=pk&search=" + this.props.pksearch + "&page=" + this.state.page;
     } else {
       uri += "?page=" + this.state.page;
     }
@@ -156,37 +157,43 @@ class BasePost extends Component {
   };
 
   componentDidUpdate = (prevprops, prevState) => {
-    if (prevprops.group !== this.props.group) {
+    if (
+      this.props.pksearch != prevprops.pksearch &&
+      this.props.pksearch != false
+    ) {
       this.setState(
         {
           group: this.props.group,
           loading: true,
           page: 1,
           items: 0,
-          offset: 0
+          offset: 0,
+          posts: []
         },
-        () => this.getList(PostListView + this.props.group.pk + "/?page=" + 1)
+        () =>
+          this.getList(
+            PostListView +
+              this.state.group.pk +
+              "/?name=pk&search=" +
+              this.props.pksearch +
+              "&page=1"
+          )
       );
-    }
-
-    if (prevprops.renderpost !== this.props.renderpost) {
-      if (this.props.params !== prevprops.params) {
-        let uri =
-          PostListView +
-          this.state.group.pk +
-          "/?name=pk&search=" +
-          this.props.params +
-          "&page=" +
-          this.state.page;
-        this.setState(
-          { page: 1, posts: [], loading: true, pksearch: this.props.params },
-          () => this.getList(uri)
-        );
-      } else {
-        this.setState({ page: 1, posts: [], loading: true }, () =>
-          this.getList(PostListView + this.props.group.pk + "/?page=" + 1)
-        );
-      }
+    } else if (
+      prevprops.renderpost !== this.props.renderpost ||
+      prevprops.group !== this.props.group
+    ) {
+      this.setState(
+        {
+          group: this.props.group,
+          loading: true,
+          page: 1,
+          items: 0,
+          offset: 0,
+          posts: []
+        },
+        () => this.getList(PostListView + this.state.group.pk + "/?page=1")
+      );
     }
   };
 
@@ -204,6 +211,9 @@ class BasePost extends Component {
     data.append("group", this.state.group.pk);
     data.append("header", this.state.header);
     data.append("about", this.state.about);
+    for (let i in this.state.tags) {
+      data.append("tags[]", this.state.tags[i]);
+    }
     if (this.state.file !== "") {
       data.append("file", this.state.file);
     }
@@ -259,7 +269,9 @@ class BasePost extends Component {
         header: "",
         about: "",
         file: "",
-        emptyData: false
+        emptyData: false,
+        tags: [],
+        tag: ""
       });
     }
   };
@@ -326,7 +338,9 @@ class BasePost extends Component {
                     modalvisible: false,
                     header: "",
                     about: "",
-                    file: ""
+                    file: "",
+                    tags: [],
+                    tag: ""
                   })
                 }
                 style={{ float: "right", cursor: "pointer" }}
@@ -388,14 +402,38 @@ class BasePost extends Component {
                         </label>
                       </div>
                       <br />
-                      <Button
-                        disabled={this.state.formloading}
-                        onClick={this.handlePostCreate}
-                        loading={this.state.formloading}
-                        secondary
-                      >
-                        Post it
-                      </Button>
+                      {this.state.tags.map((tag, index) => (
+                        <Label style={{ marginBottom: 1 }} key={index}>
+                          {tag}{" "}
+                          <Icon
+                            name="close icon"
+                            size="small"
+                            onClick={() => {
+                              let tags = [...this.state.tags];
+                              tags.splice(index, 1);
+                              this.setState({ tags: tags });
+                            }}
+                          />
+                        </Label>
+                      ))}
+
+                      <Input
+                        icon="tag"
+                        iconPosition="left"
+                        placeholder="Tag any user for the post ..... ?"
+                        value={this.state.tag}
+                        type="text"
+                        onChange={e => this.setState({ tag: e.target.value })}
+                        onKeyPress={e => {
+                          if (e.key === "Enter") {
+                            let tags = [...this.state.tags];
+                            tags.push(this.state.tag);
+                            this.setState({ tags: tags, tag: "" });
+                          }
+                        }}
+                        style={{ width: "100%" }}
+                      />
+
                       <Divider horizontal />
                     </Grid.Column>
 
@@ -403,6 +441,16 @@ class BasePost extends Component {
                   </Grid.Row>
                 </Grid>
               </Form>
+              <div style={{ textAlign: "center" }}>
+                <Button
+                  disabled={this.state.formloading}
+                  onClick={this.handlePostCreate}
+                  loading={this.state.formloading}
+                  secondary
+                >
+                  Post it
+                </Button>
+              </div>
             </Modal.Content>
           </Modal>
         </Transition>
@@ -419,6 +467,7 @@ class BasePost extends Component {
                 <Icon name="add" />
                 Add a new Post to Timeline
               </Button>
+
               {this.state.emptyData ? (
                 <Fragment>
                   <div
@@ -461,7 +510,6 @@ class BasePost extends Component {
                               </div>
                             </CopyToClipboard>
                           </Card.Header>
-
                           <Card.Meta>
                             <span className="date">
                               {this.formatTime(obj.created_on)}
@@ -480,6 +528,21 @@ class BasePost extends Component {
                               ""
                             )}
                           </Card.Meta>
+                          {obj.posttaggeduser_set.length !== 0 ? (
+                            <Fragment>
+                              {obj.posttaggeduser_set.map((tag, index) => (
+                                <Fragment>
+                                  <b>{tag.user}</b>
+                                  {index !== obj.posttaggeduser_set.length - 1
+                                    ? ", "
+                                    : " "}
+                                </Fragment>
+                              ))}
+                              tagged in this post.
+                            </Fragment>
+                          ) : (
+                            ""
+                          )}
                           <br />
                           {obj.file !== null ? (
                             <Fragment>
@@ -602,7 +665,9 @@ class PostEdit extends Component {
       file: false,
       visible: false,
       loading: false,
-      alert: false
+      alert: false,
+      tags: [],
+      tag: ""
     };
   }
 
@@ -619,14 +684,39 @@ class PostEdit extends Component {
     this.setState({ [name]: value });
   };
 
+  checkEqual = (arr1, arr2) => {
+    let ind = false;
+    for (let i in arr1) {
+      if (arr1[i] !== arr2[i].user) {
+        ind = true;
+        break;
+      }
+    }
+    if (ind === true) {
+      return arr1;
+    } else {
+      return [];
+    }
+  };
+
   HandleFormSubmit = () => {
     this.setState({ loading: true });
+    let tag = [];
+    if (this.state.tags.length !== this.props.posttaggeduser_set) {
+      tag = this.state.tags;
+    } else {
+      tag = this.checkEqual(this.state.tags, this.props.posttaggeduser_set);
+    }
 
     if (this.state.file === false) {
       let data = {
         header: this.state.header,
         about: this.state.about
       };
+
+      if (tag.length !== 0) {
+        data["tags"] = tag;
+      }
       let headers = {
         Authorization: "Token " + getCookie("token")[0].value,
         "Content-Type": "application/json"
@@ -645,6 +735,11 @@ class PostEdit extends Component {
       data.append("about", this.state.about);
       if (this.state.file !== "") {
         data.append("file", this.state.file);
+      }
+      if (tag.length !== 0) {
+        for (let i in tag) {
+          data.append("tags[]", tag[i]);
+        }
       }
       fetchFileAsynchronous(
         PostView + this.props.post.pk + "/",
@@ -680,11 +775,19 @@ class PostEdit extends Component {
   };
 
   handleUpdate = () => {
+    let tags = [];
+    let taggeduser = this.props.post.posttaggeduser_set;
+    for (let i in taggeduser) {
+      tags.push(taggeduser[i].user);
+    }
+    console.log(this.props.post.posttaggeduser_set);
+    console.log(tags);
     this.setState({
       visible: true,
       header: this.props.post.header,
       about: this.props.post.about,
-      file: false
+      file: false,
+      tags: tags
     });
   };
 
@@ -783,14 +886,38 @@ class PostEdit extends Component {
                         </label>
                       </div>
                       <br />
-                      <Button
-                        disabled={this.state.loading}
-                        onClick={this.HandleFormSubmit}
-                        loading={this.state.loading}
-                        secondary
-                      >
-                        Update
-                      </Button>
+                      {this.state.tags.map((tag, index) => (
+                        <Label style={{ marginBottom: 1 }} key={index}>
+                          {tag}{" "}
+                          <Icon
+                            name="close"
+                            size="small"
+                            onClick={() => {
+                              let tags = [...this.state.tags];
+                              tags.splice(index, 1);
+                              this.setState({ tags: tags });
+                            }}
+                          />
+                        </Label>
+                      ))}
+
+                      <Input
+                        icon="tag"
+                        iconPosition="left"
+                        placeholder="Tag any user for the post ..... ?"
+                        value={this.state.tag}
+                        type="text"
+                        onChange={e => this.setState({ tag: e.target.value })}
+                        onKeyPress={e => {
+                          if (e.key === "Enter") {
+                            let tags = [...this.state.tags];
+                            tags.push(this.state.tag);
+                            this.setState({ tags: tags, tag: "" });
+                          }
+                        }}
+                        style={{ width: "100%" }}
+                      />
+
                       <Divider horizontal />
                     </Grid.Column>
 
@@ -798,6 +925,16 @@ class PostEdit extends Component {
                   </Grid.Row>
                 </Grid>
               </Form>
+              <div style={{ textAlign: "center" }}>
+                <Button
+                  disabled={this.state.loading}
+                  onClick={this.HandleFormSubmit}
+                  loading={this.state.loading}
+                  secondary
+                >
+                  Update
+                </Button>
+              </div>
             </Modal.Content>
           </Modal>
         </Transition>

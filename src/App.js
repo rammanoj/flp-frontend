@@ -27,7 +27,13 @@ class App extends Component {
           {/* Invite User */}
           <Route exact path="/team/invite/:link" component={InviteUser} />
           {/* Home page */}
-          <Route exact path="/home" component={Home} />
+          <Route
+            exact
+            path="/home"
+            render={props => {
+              return <Home {...props} />;
+            }}
+          />
           {/* Post link */}
           <Route
             exact

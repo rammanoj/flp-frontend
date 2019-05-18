@@ -35,8 +35,10 @@ import Notify from "./notifications";
 class Home extends Component {
   constructor(props) {
     super(props);
-
     let params = this.props.match.params;
+    if (Object.entries(params).length === 0) {
+      params = false;
+    }
     this.state = {
       isLoggedIn: getCookie("token")[1],
       loading: true,
@@ -55,9 +57,11 @@ class Home extends Component {
         header: "",
         type: ""
       },
+      params: params,
       loader: false,
-      params: Object.keys(params).length !== 0 ? params : false,
       notFound: false,
+      pksearch: false,
+      change: false,
       redirect: false
     };
 
@@ -88,29 +92,35 @@ class Home extends Component {
   };
 
   componentDidUpdate = (prevprops, prestate) => {
-    if (prevprops.match.params !== this.props.match.params) {
-      this.setState(
-        { params: this.props.match.params, redirect: false },
-        () => {
-          let obj = this.state.groups.find(ob => {
-            return ob.pk === parseInt(this.state.params.group);
+    if (this.state.redirect !== false) {
+      this.setState({ redirect: false });
+    }
+
+    if (
+      this.props.match.params !== prevprops.match.params &&
+      Object.entries(this.props.match.params).length !== 0
+    ) {
+      let temp = this.props.match.params;
+      let obj = this.state.groups.find(obj => obj.pk === parseInt(temp.group));
+      if (obj === undefined) {
+        this.setState({ notFound: true });
+      } else {
+        let subgroup = obj.subgroup_set.find(
+          elem => elem.pk === parseInt(temp.subgroup)
+        );
+        if (subgroup === undefined) {
+          this.setState({ notFound: true });
+        } else {
+          this.setState({
+            groupSelected: obj,
+            activeItem: obj.pk,
+            active: false,
+            subgroup: subgroup,
+            params: this.props.match.params,
+            pksearch: parseInt(this.props.match.params.post)
           });
-          if (obj === undefined) {
-            this.setState({ notFound: true });
-          } else {
-            let subgroup = obj.subgroup_set.find(
-              elem => elem.pk === parseInt(this.state.params.subgroup)
-            );
-            if (subgroup === undefined) {
-              this.setState({ notFound: true });
-            } else {
-              this.setState({
-                subgroup: subgroup
-              });
-            }
-          }
         }
-      );
+      }
     }
   };
 
@@ -123,8 +133,6 @@ class Home extends Component {
         { Authorization: "Token " + getCookie("token")[0].value },
         this.getGroupsCallback
       );
-    } else {
-      // User is not LoggedIn
     }
   };
 
@@ -153,7 +161,8 @@ class Home extends Component {
                   groupSelected: obj,
                   activeItem: obj.pk,
                   active: false,
-                  subgroup: subgroup
+                  subgroup: subgroup,
+                  pksearch: parseInt(this.state.params.post)
                 });
               }
             }
@@ -168,7 +177,10 @@ class Home extends Component {
       groupSelected: obj,
       activeItem: obj.pk,
       active: false,
-      subgroup: {}
+      subgroup: {},
+      pksearch: false,
+      change: !this.state.change,
+      redirect: this.props.location.pathname !== "/home" ? "/home" : false
     });
   };
 
@@ -253,20 +265,18 @@ class Home extends Component {
       visible,
       subgroup
     } = this.state;
-    console.log("came to render to render the component");
-    console.log(this.state);
     if (!this.state.isLoggedIn) {
       return <Redirect to="/login" />;
     }
 
     if (this.state.notFound) {
-      this.setState({ notFound: false });
       return <Redirect to="/404" />;
     }
 
-    if (this.state.redirect) {
+    if (this.state.redirect !== false) {
       return <Redirect to={this.state.redirect} />;
     }
+
     return (
       <div>
         {this.state.loading ? (
@@ -281,6 +291,8 @@ class Home extends Component {
               active={1}
               search={!this.isempty(group)}
               func={this.handleSearch}
+              group={this.state.groupSelected}
+              subgroup={this.state.subgroup}
             />
             <MessageDisplay
               message={this.state.message.message}
@@ -360,86 +372,89 @@ class Home extends Component {
                       width: "100%"
                     }}
                   >
-                    <Accordion>
-                      <Accordion.Title
-                        active={active}
-                        index={0}
+                    <Fragment>
+                      <Accordion>
+                        <Accordion.Title
+                          active={active}
+                          index={0}
+                          onClick={() =>
+                            this.setState({
+                              active: active ? false : true
+                            })
+                          }
+                        >
+                          <Icon name="users" />
+                          Groups <Icon name="dropdown" />
+                        </Accordion.Title>
+                        <Transition
+                          animation="drop"
+                          duration={500}
+                          visible={active}
+                        >
+                          <Accordion.Content active={active}>
+                            <div style={{ width: "auto", textAlign: "center" }}>
+                              <Scrollbars style={{ height: "25vh" }}>
+                                {this.state.groups.length === 0 ? (
+                                  <div style={{ textAlign: "center" }}>
+                                    No groups currently
+                                  </div>
+                                ) : (
+                                  <Menu vertical style={{ width: "100%" }}>
+                                    <React.Fragment>
+                                      {this.state.groups.map((obj, index) => (
+                                        <Menu.Item
+                                          key={index}
+                                          name={obj.name}
+                                          active={activeItem === obj.pk}
+                                          style={{ cursor: "pointer" }}
+                                          onClick={() => {
+                                            this.handleGroupSelect(obj);
+                                          }}
+                                        >
+                                          {obj.name}
+                                        </Menu.Item>
+                                      ))}
+                                    </React.Fragment>
+                                  </Menu>
+                                )}
+                              </Scrollbars>
+                            </div>
+                          </Accordion.Content>
+                        </Transition>
+                      </Accordion>
+                      <Button
+                        secondary
+                        style={{ width: "90%" }}
                         onClick={() =>
                           this.setState({
-                            active: active ? false : true
+                            visible: true,
+                            message: { message: false, header: "", type: 1 }
                           })
                         }
                       >
-                        <Icon name="users" />
-                        Groups <Icon name="dropdown" />
-                      </Accordion.Title>
-                      <Transition
-                        animation="drop"
-                        duration={500}
-                        visible={active}
-                      >
-                        <Accordion.Content active={active}>
-                          <div style={{ width: "auto", textAlign: "center" }}>
-                            <Scrollbars style={{ height: "25vh" }}>
-                              {this.state.groups.length === 0 ? (
-                                <div style={{ textAlign: "center" }}>
-                                  No groups currently
-                                </div>
-                              ) : (
-                                <Menu vertical style={{ width: "100%" }}>
-                                  <React.Fragment>
-                                    {this.state.groups.map((obj, index) => (
-                                      <Menu.Item
-                                        key={index}
-                                        name={obj.name}
-                                        active={activeItem === obj.pk}
-                                        style={{ cursor: "pointer" }}
-                                        onClick={() => {
-                                          this.handleGroupSelect(obj);
-                                        }}
-                                      >
-                                        {obj.name}
-                                      </Menu.Item>
-                                    ))}
-                                  </React.Fragment>
-                                </Menu>
-                              )}
-                            </Scrollbars>
-                          </div>
-                        </Accordion.Content>
-                      </Transition>
-                    </Accordion>
-                    <Button
-                      secondary
-                      style={{ width: "90%" }}
-                      onClick={() =>
-                        this.setState({
-                          visible: true,
-                          message: { message: false, header: "", type: 1 }
-                        })
-                      }
-                    >
-                      <Icon name="add" />
-                      Add new Group
-                    </Button>
-
-                    {this.isempty(group) ? (
-                      ""
-                    ) : (
-                      <Fragment>
-                        <GroupSelected
-                          group={group}
-                          params={this.state.params}
-                          renderpost={this.state.renderpost}
-                          subgroup={subgroup}
-                          set={this.set}
-                          setLoader={this.setLoader}
-                          updateGroup={this.updateGroup}
-                          setMessage={this.setMessage}
-                          removeGroup={this.removeGroup}
-                        />
-                      </Fragment>
-                    )}
+                        <Icon name="add" />
+                        Add new Group
+                      </Button>
+                      {this.isempty(group) ? (
+                        ""
+                      ) : (
+                        <Fragment>
+                          <GroupSelected
+                            group={group}
+                            uri={this.props.location.pathname}
+                            params={this.state.pksearch.post}
+                            renderpost={this.state.renderpost}
+                            subgroup={subgroup}
+                            set={this.set}
+                            change={this.state.change}
+                            setLoader={this.setLoader}
+                            updateGroup={this.updateGroup}
+                            setMessage={this.setMessage}
+                            removeGroup={this.removeGroup}
+                          />
+                        </Fragment>
+                      )}
+                    </Fragment>
                   </Scrollbars>
                 </Grid.Column>
 
@@ -482,18 +497,16 @@ class Home extends Component {
                           </div>
                         </Fragment>
                       ) : (
-                        <BasePost
-                          ref={this.child}
-                          renderpost={this.state.renderpost}
-                          setLoader={this.setLoader}
-                          group={this.state.subgroup}
-                          setMessage={this.setMessage}
-                          params={
-                            this.state.params !== false
-                              ? this.state.params.post
-                              : false
-                          }
-                        />
+                        <Fragment>
+                          <BasePost
+                            ref={this.child}
+                            renderpost={this.state.renderpost}
+                            setLoader={this.setLoader}
+                            group={this.state.subgroup}
+                            setMessage={this.setMessage}
+                            pksearch={this.state.pksearch}
+                          />
+                        </Fragment>
                       )}
                     </Fragment>
                   )}
@@ -509,7 +522,7 @@ class Home extends Component {
                       }}
                     >
                       <Notify group={group} set={this.set} />
-                      <UserList group={group} />
+                      <UserList group={group} set={this.set} />
                       <Invite group={group} setMessage={this.setMessage} />
                     </Scrollbars>
                   )}
@@ -539,10 +552,7 @@ class GroupSelected extends Component {
       alertMessage: "",
       alertvisible: false,
       active: false,
-      activeItem:
-        Object.entries(this.props.params).length !== 0
-          ? parseInt(this.props.params.subgroup)
-          : "",
+      activeItem: this.props.params !== "" ? this.props.params : false,
       name: "",
       subgroupdel: false,
       subgroupupdate: false
@@ -550,33 +560,16 @@ class GroupSelected extends Component {
   }
 
   componentDidUpdate = (prevProps, prevState) => {
-    if (this.props.group !== prevProps.group) {
+    if (
+      this.props.group !== prevProps.group ||
+      prevProps.change != this.props.change
+    ) {
       this.setState({
         group: this.props.group,
         groupname: this.props.group.name,
         groupabout: this.props.group.about,
         active: false,
-        activeItem:
-          Object.entries(this.props.params).length !== 0
-            ? parseInt(this.props.params.subgroup)
-            : ""
-      });
-    }
-
-    if (prevProps.params !== this.props.params) {
-      if (Object.entries(this.props.params).length !== 0) {
-        this.setState({
-          active: false,
-          activeItem: this.props.params.subgroup
-        });
-      } else {
-        this.setState({ active: false, activeItem: "" });
-      }
-      this.props.set({
-        subgroup: this.state.group.subgroup_set.find(
-          obj => obj.pk === this.props.params.subgroup
-        ),
-        renderpost: !this.props.renderpost
+        activeItem: this.props.group.pk
       });
     }
   };
@@ -703,7 +696,13 @@ class GroupSelected extends Component {
       activeItem: obj.pk,
       active: false
     });
-    this.props.set({ subgroup: obj, renderpost: !this.props.renderpost });
+    let elem = {
+      subgroup: obj,
+      pksearch: false,
+      renderpost: !this.props.renderpost,
+      redirect: this.props.url !== "/home" ? "/home" : false
+    };
+    this.props.set(elem);
   };
 
   handleSubGroupCreate = () => {
@@ -768,7 +767,7 @@ class GroupSelected extends Component {
         let group = Object.assign({}, this.state.group);
         let index = group.subgroup_set.indexOf(this.props.subgroup);
         group.subgroup_set.splice(index, 1);
-        this.props.set({ groupSelected: group, subgroup: {} });
+        this.props.set({ groupSelected: group, subgroup: {}, pksearch: false });
       }
     );
   };
@@ -1065,9 +1064,7 @@ class GroupSelected extends Component {
                               name={obj.name}
                               active={activeItem === obj.pk}
                               style={{ cursor: "pointer" }}
-                              onClick={() => {
-                                this.handleSubGroupSelect(obj);
-                              }}
+                              onClick={() => this.handleSubGroupSelect(obj)}
                             >
                               {obj.name}
                             </Menu.Item>

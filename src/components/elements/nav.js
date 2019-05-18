@@ -11,9 +11,13 @@ import {
   Grid,
   TextArea,
   Button,
-  Icon
+  Dropdown,
+  Loader
 } from "semantic-ui-react";
-import { red, green } from "./../../api";
+import { red, green, notifyListView } from "./../../api";
+import InfiniteScroll from "react-infinite-scroll-component";
+import { fetchAsynchronous } from "./../controllers/fetch";
+import { AllNotify } from "../allnotify";
 
 class NavBar extends Component {
   constructor(props) {
@@ -21,11 +25,18 @@ class NavBar extends Component {
     this.state = {
       isLoggedIn: getCookie("token")[1],
       active: this.props.active,
-      search: ""
+      search: "",
+      notifications: ["asodnaosknd", "this is a sample", "hellow workd"],
+      page: 1,
+      paginate: false,
+      loading: true,
+      emptyData: false
     };
   }
 
-  handleItemClick = () => {};
+  set = obj => {
+    this.setState(obj);
+  };
 
   render = () => {
     let { isLoggedIn, active } = this.state;
@@ -42,31 +53,34 @@ class NavBar extends Component {
                 name="Home"
                 to="/home"
                 as={Link}
+                onClick={() => window.location.refresh()}
                 active={active === 1}
-                onClick={this.handleItemClick}
               />
 
               <Menu.Item position="right">
                 <Menu inverted>
+                  {Object.entries(this.props.subgroup).length !== 0 ? (
+                    <Menu.Item>
+                      <Input
+                        icon="search"
+                        type="text"
+                        placeholder="Search"
+                        value={this.state.search}
+                        onChange={e =>
+                          this.setState({ search: e.target.value })
+                        }
+                        onKeyPress={e => this.props.func(e, this.state.search)}
+                      />
+                    </Menu.Item>
+                  ) : (
+                    ""
+                  )}
                   {this.props.hasOwnProperty("search") && this.props.search ? (
                     <Fragment>
                       <Menu.Item>
-                        <Input
-                          icon="search"
-                          type="text"
-                          iconPosition="right"
-                          placeholder="Search"
-                          value={this.state.search}
-                          onChange={e =>
-                            this.setState({ search: e.target.value })
-                          }
-                          onKeyPress={e =>
-                            this.props.func(e, this.state.search)
-                          }
-                        />
-                      </Menu.Item>
-                      <Menu.Item>
-                        <Icon name="bell" style={{ cursor: "pointer" }} />
+                        <Dropdown pointing icon="bell">
+                          {/* <AllNotify group={this.props.group} /> */}
+                        </Dropdown>
                       </Menu.Item>
                     </Fragment>
                   ) : (

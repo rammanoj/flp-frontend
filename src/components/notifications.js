@@ -4,6 +4,7 @@ import { notifyListView } from "./../api";
 import { fetchAsynchronous } from "./controllers/fetch";
 import { Icon, Menu, Loader } from "semantic-ui-react";
 import { Scrollbars } from "react-custom-scrollbars";
+import { Link } from "react-router-dom";
 
 export default class Notify extends React.Component {
   constructor(props) {
@@ -98,9 +99,8 @@ export default class Notify extends React.Component {
                         {this.state.notifications.map((obj, index) => (
                           <Menu.Item
                             key={index}
-                            onClick={() =>
-                              this.props.set({ redirect: obj.link })
-                            }
+                            as={Link}
+                            to={"/" + obj.link}
                             style={{ width: "99%", cursor: "pointer" }}
                           >
                             {obj.text}

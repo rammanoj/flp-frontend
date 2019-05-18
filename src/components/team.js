@@ -122,6 +122,7 @@ export default class UserList extends Component {
                   <Grid style={{ overflowX: "hidden" }}>
                     {this.state.users.map((obj, index) => (
                       <Popup
+                        key={index}
                         trigger={
                           <Grid.Column
                             width={3}
