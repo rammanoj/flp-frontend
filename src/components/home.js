@@ -944,11 +944,7 @@ class GroupSelected extends Component {
               >
                 <Icon name="remove" /> No
               </Button>
-              <Button
-                color="green"
-                inverted
-                onClick={this.handleSubgroupDelete}
-              >
+              <Button color="green" inverted onClick={this.handleAlertClick}>
                 <Icon name="checkmark" /> Yes
               </Button>
             </Modal.Actions>
@@ -1062,7 +1058,7 @@ class GroupSelected extends Component {
                             <Menu.Item
                               key={index}
                               name={obj.name}
-                              active={activeItem === obj.pk}
+                              active={this.state.activeItem === obj.pk}
                               style={{ cursor: "pointer" }}
                               onClick={() => this.handleSubGroupSelect(obj)}
                             >
