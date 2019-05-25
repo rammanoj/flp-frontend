@@ -13,7 +13,10 @@ import {
   Input,
   TextArea,
   Header,
-  Form
+  Form,
+  Sidebar,
+  Image,
+  Dropdown
 } from "semantic-ui-react";
 import { Redirect } from "react-router-dom";
 import { getCookie } from "./cookie";
@@ -25,12 +28,15 @@ import {
   subGroupCreate,
   subGroupUpdate
 } from "./../api";
-import { fetchAsynchronous } from "./controllers/fetch";
+import { fetchAsynchronous, fetchFileAsynchronous } from "./controllers/fetch";
 import { Scrollbars } from "react-custom-scrollbars";
 import { BasePost } from "./post";
 import UserList from "./team";
 import { Invite } from "./invite";
 import Notify from "./notifications";
+
+var hoverselect = false,
+  hoversub = false;
 
 class Home extends Component {
   constructor(props) {
@@ -48,6 +54,7 @@ class Home extends Component {
       activeItem: false,
       groupname: "",
       groupabout: "",
+      grouppic: "",
       visible: false,
       subgroup: {},
       formloading: false,
@@ -62,7 +69,15 @@ class Home extends Component {
       notFound: false,
       pksearch: false,
       change: false,
-      redirect: false
+      redirect: false,
+      hover: false,
+      displayl: window.innerWidth < 800 ? true : false,
+      displayr: window.innerWidth < 800 ? true : false,
+      alertvisible: false,
+      alertAction: -1,
+      alertContent: "",
+      modalvisible: false,
+      operation_pk: -1
     };
 
     this.child = React.createRef();
@@ -88,6 +103,7 @@ class Home extends Component {
   };
 
   set = obj => {
+    console.log(obj);
     this.setState(obj);
   };
 
@@ -133,6 +149,7 @@ class Home extends Component {
         { Authorization: "Token " + getCookie("token")[0].value },
         this.getGroupsCallback
       );
+      window.addEventListener("resize", this.updateSize);
     }
   };
 
@@ -190,25 +207,21 @@ class Home extends Component {
   };
 
   HandleFormSubmit = () => {
-    let data = {
-      name: this.state.groupname,
-      about: this.state.groupabout
-    };
-
-    let headers = {
-      Authorization: "Token " + getCookie("token")[0].value,
-      "Content-Type": "application/json"
-    };
-
+    let data = new FormData();
+    data.append("name", this.state.groupname);
+    data.append("about", this.state.groupabout);
+    if (this.state.grouppic != "") {
+      data.append("pic", this.state.grouppic);
+    }
     this.setState({
       formloading: true,
       message: { message: false, header: "", type: 1 }
     });
-    fetchAsynchronous(
+    fetchFileAsynchronous(
       GroupCreateView,
       "POST",
       data,
-      headers,
+      { Authorization: "Token " + getCookie("token")[0].value },
       this.handleGroupAPICallback
     );
   };
@@ -217,7 +230,10 @@ class Home extends Component {
     this.setState({
       visible: false,
       groupname: "",
-      groupabout: ""
+      groupabout: "",
+      formloading: false,
+      grouppic: "",
+      modalvisible: false
     });
   };
 
@@ -238,370 +254,29 @@ class Home extends Component {
         },
         formloading: false,
         visible: false,
-        groups: groups
+        groups: groups,
+        groupname: "",
+        groupabout: "",
+        grouppic: ""
       });
     }
-  };
-
-  updateGroup = obj => {
-    let index = this.state.groups.indexOf(this.state.groupSelected);
-    let groups = [...this.state.groups];
-    groups[index] = obj;
-    this.setState({ groups: groups, groupSelected: obj });
-  };
-
-  removeGroup = () => {
-    let index = this.state.groups.indexOf(this.state.groupSelected);
-    let groups = [...this.state.groups];
-    groups.splice(index, 1);
-    this.setState({ groups: groups, groupSelected: {} });
-  };
-
-  render() {
-    let {
-      groupSelected: group,
-      active,
-      activeItem,
-      visible,
-      subgroup
-    } = this.state;
-    if (!this.state.isLoggedIn) {
-      return <Redirect to="/login" />;
-    }
-
-    if (this.state.notFound) {
-      return <Redirect to="/404" />;
-    }
-
-    if (this.state.redirect !== false) {
-      return <Redirect to={this.state.redirect} />;
-    }
-
-    return (
-      <div>
-        {this.state.loading ? (
-          <div>
-            <Dimmer active inverted>
-              <Loader size="medium">Fetching Groups..</Loader>
-            </Dimmer>
-          </div>
-        ) : (
-          <Fragment>
-            <NavBar
-              active={1}
-              search={!this.isempty(group)}
-              func={this.handleSearch}
-              group={this.state.groupSelected}
-              subgroup={this.state.subgroup}
-            />
-            <MessageDisplay
-              message={this.state.message.message}
-              header={this.state.message.header}
-              type={this.state.message.type}
-            />
-            {this.state.loader ? (
-              <Dimmer active>
-                <Loader name="loading..." />
-              </Dimmer>
-            ) : (
-              ""
-            )}
-            <Transition animation="scale" duration={400} visible={visible}>
-              <Modal open={visible} centered={false}>
-                <Modal.Header>
-                  Add a new Group ?
-                  <Button
-                    icon="close"
-                    onClick={this.handleModalClose}
-                    circular
-                    negative
-                    style={{
-                      float: "right"
-                    }}
-                  />
-                </Modal.Header>
-                <Modal.Content>
-                  <Form>
-                    <Grid columns="equal">
-                      <Grid.Row>
-                        <Grid.Column />
-                        <Grid.Column textAlign="center">
-                          <Input
-                            icon="users"
-                            type="text"
-                            name="groupname"
-                            iconPosition="left"
-                            placeholder="Group Name"
-                            value={this.state.gorupname}
-                            onChange={this.handleChange}
-                            style={{ marginBottom: 15 }}
-                          />
-                          <TextArea
-                            placeholder="Tell us more"
-                            name="groupabout"
-                            value={this.state.groupabout}
-                            onChange={this.handleChange}
-                            style={{ marginBottom: 15 }}
-                            rows={4}
-                          />
-                          <Button
-                            disabled={this.state.formloading}
-                            onClick={this.HandleFormSubmit}
-                            loading={this.state.formloading}
-                            secondary
-                          >
-                            Add new
-                          </Button>
-                          <Divider horizontal />
-                        </Grid.Column>
-
-                        <Grid.Column />
-                      </Grid.Row>
-                    </Grid>
-                  </Form>
-                </Modal.Content>
-              </Modal>
-            </Transition>
-            <Grid celled="internally" style={{ height: "83%" }}>
-              <Grid.Row style={{ height: "83vh" }}>
-                <Grid.Column computer={4} mobile={16}>
-                  <Scrollbars
-                    style={{
-                      height: "99%",
-                      overflowX: "hidden",
-                      width: "100%"
-                    }}
-                  >
-                    <Fragment>
-                      <Accordion>
-                        <Accordion.Title
-                          active={active}
-                          index={0}
-                          onClick={() =>
-                            this.setState({
-                              active: active ? false : true
-                            })
-                          }
-                        >
-                          <Icon name="users" />
-                          Groups <Icon name="dropdown" />
-                        </Accordion.Title>
-                        <Transition
-                          animation="drop"
-                          duration={500}
-                          visible={active}
-                        >
-                          <Accordion.Content active={active}>
-                            <div style={{ width: "auto", textAlign: "center" }}>
-                              <Scrollbars style={{ height: "25vh" }}>
-                                {this.state.groups.length === 0 ? (
-                                  <div style={{ textAlign: "center" }}>
-                                    No groups currently
-                                  </div>
-                                ) : (
-                                  <Menu vertical style={{ width: "100%" }}>
-                                    <React.Fragment>
-                                      {this.state.groups.map((obj, index) => (
-                                        <Menu.Item
-                                          key={index}
-                                          name={obj.name}
-                                          active={activeItem === obj.pk}
-                                          style={{ cursor: "pointer" }}
-                                          onClick={() => {
-                                            this.handleGroupSelect(obj);
-                                          }}
-                                        >
-                                          {obj.name}
-                                        </Menu.Item>
-                                      ))}
-                                    </React.Fragment>
-                                  </Menu>
-                                )}
-                              </Scrollbars>
-                            </div>
-                          </Accordion.Content>
-                        </Transition>
-                      </Accordion>
-                      <Button
-                        secondary
-                        style={{ width: "90%" }}
-                        onClick={() =>
-                          this.setState({
-                            visible: true,
-                            message: { message: false, header: "", type: 1 }
-                          })
-                        }
-                      >
-                        <Icon name="add" />
-                        Add new Group
-                      </Button>
-                      {this.isempty(group) ? (
-                        ""
-                      ) : (
-                        <Fragment>
-                          <GroupSelected
-                            group={group}
-                            uri={this.props.location.pathname}
-                            params={this.state.pksearch.post}
-                            renderpost={this.state.renderpost}
-                            subgroup={subgroup}
-                            set={this.set}
-                            change={this.state.change}
-                            setLoader={this.setLoader}
-                            updateGroup={this.updateGroup}
-                            setMessage={this.setMessage}
-                            removeGroup={this.removeGroup}
-                          />
-                        </Fragment>
-                      )}
-                    </Fragment>
-                  </Scrollbars>
-                </Grid.Column>
-
-                <Grid.Column computer={8} mobile={16}>
-                  {this.isempty(group) ? (
-                    <div
-                      style={{
-                        marginTop: "calc(100px + 15vh)",
-                        textAlign: "center"
-                      }}
-                    >
-                      <h2>Select a Group to Continue</h2>
-                      <Grid columns="equal">
-                        <Grid.Row>
-                          <Grid.Column />
-                          <Grid.Column>
-                            <Divider
-                              horizontal
-                              style={{ width: "10vw", marginLeft: 30 }}
-                            >
-                              Or
-                            </Divider>
-                          </Grid.Column>
-                          <Grid.Column />
-                        </Grid.Row>
-                      </Grid>
-                      <h2>Create a new Group</h2>
-                    </div>
-                  ) : (
-                    <Fragment>
-                      {this.isempty(subgroup) ? (
-                        <Fragment>
-                          <div
-                            style={{
-                              marginTop: "calc(100px + 15vh)",
-                              textAlign: "center"
-                            }}
-                          >
-                            <h2>Select a SubGroup to display the posts</h2>
-                          </div>
-                        </Fragment>
-                      ) : (
-                        <Fragment>
-                          <BasePost
-                            ref={this.child}
-                            renderpost={this.state.renderpost}
-                            setLoader={this.setLoader}
-                            group={this.state.subgroup}
-                            setMessage={this.setMessage}
-                            pksearch={this.state.pksearch}
-                          />
-                        </Fragment>
-                      )}
-                    </Fragment>
-                  )}
-                </Grid.Column>
-
-                <Grid.Column computer={4} mobile={16}>
-                  {this.isempty(group) ? (
-                    ""
-                  ) : (
-                    <Scrollbars
-                      style={{
-                        height: "99%"
-                      }}
-                    >
-                      <Notify group={group} set={this.set} />
-                      <UserList group={group} set={this.set} />
-                      <Invite group={group} setMessage={this.setMessage} />
-                    </Scrollbars>
-                  )}
-                </Grid.Column>
-              </Grid.Row>
-            </Grid>
-          </Fragment>
-        )}
-      </div>
-    );
-  }
-}
-
-class GroupSelected extends Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      isLoggedIn: getCookie("token")[1],
-      group: this.props.group,
-      visible: true,
-      modalvisible: false,
-      formloading: false,
-      groupname: this.props.group.name,
-      groupabout: this.props.group.about,
-      message: { message: false, header: "", type: 1 },
-      alertAction: 0,
-      alertMessage: "",
-      alertvisible: false,
-      active: false,
-      activeItem: this.props.params !== "" ? this.props.params : false,
-      name: "",
-      subgroupdel: false,
-      subgroupupdate: false
-    };
-  }
-
-  componentDidUpdate = (prevProps, prevState) => {
-    if (
-      this.props.group !== prevProps.group ||
-      prevProps.change != this.props.change
-    ) {
-      this.setState({
-        group: this.props.group,
-        groupname: this.props.group.name,
-        groupabout: this.props.group.about,
-        active: false,
-        activeItem: this.props.group.pk
-      });
-    }
-  };
-
-  handleChange = e => {
-    let { name, value } = e.target;
-    this.setState({ [name]: value });
-  };
-
-  handleModalClose = () => {
-    this.setState({
-      modalvisible: false
-    });
   };
 
   handleUpdate = () => {
-    let data = {
-      name: this.state.groupname,
-      about: this.state.groupabout
-    };
+    let data = new FormData();
+    data.append("name", this.state.groupname);
+    data.append("about", this.state.groupabout);
 
-    let headers = {
-      Authorization: "Token " + getCookie("token")[0].value,
-      "Content-Type": "application/json"
-    };
+    if (this.state.grouppic != "") {
+      data.append("pic", this.state.grouppic);
+    }
 
     this.setState({ formloading: true });
-    fetchAsynchronous(
-      GroupListView + this.state.group.pk + "/",
+    fetchFileAsynchronous(
+      GroupListView + this.state.operation_pk + "/",
       "PATCH",
       data,
-      headers,
+      { Authorization: "Token " + getCookie("token")[0].value },
       this.handleUpdateResponse
     );
   };
@@ -611,22 +286,26 @@ class GroupSelected extends Component {
       this.setState({
         formloading: false
       });
-      this.props.setMessage({
+      this.setMessage({
         message: response.message,
         type: 1,
         header: "Error"
       });
     } else {
+      this.updateGroup(response);
       this.setState({
         formloading: false,
-        modalvisible: false
+        modalvisible: false,
+        groupname: "",
+        groupabout: "",
+        grouppic: "",
+        operation_pk: -1
       });
-      this.props.setMessage({
+      this.setMessage({
         message: "Successfully Updated the group",
         type: 0,
         header: "Success"
       });
-      this.props.updateGroup(response);
     }
   };
 
@@ -656,10 +335,10 @@ class GroupSelected extends Component {
       Authorization: "Token " + getCookie("token")[0].value
     };
     this.setState({ alertvisible: false });
-    this.props.setLoader(true);
+    this.setLoader(true);
     if (this.state.alertAction === 0) {
       fetchAsynchronous(
-        GroupListView + this.state.group.pk + "/",
+        GroupListView + this.state.operation_pk + "/",
         "DELETE",
         undefined,
         headers,
@@ -668,7 +347,7 @@ class GroupSelected extends Component {
     } else {
       let data = {
         operation: "Remove",
-        team: this.state.group.pk
+        team: this.state.operation_pk
       };
       headers["Content-Type"] = "application/json";
       fetchAsynchronous(
@@ -682,26 +361,625 @@ class GroupSelected extends Component {
   };
 
   handleAlertResponse = response => {
-    this.props.setMessage({
+    this.setMessage({
       message: response.message,
       header: response.error === 0 ? "Success" : "Error",
       type: response.error === 0 ? 0 : 1
     });
-    this.props.setLoader(false);
-    this.props.removeGroup();
+    this.setLoader(false);
+    let index = this.state.groups.indexOf(
+      this.state.groups.find(obj => obj.pk === this.state.operation_pk)
+    );
+    let groups = [...this.state.groups];
+    groups.splice(index, 1);
+    this.setState({ groups: groups, groupSelected: {}, operation_pk: -1 });
+  };
+
+  updateGroup = obj => {
+    let index = this.state.groups.indexOf(
+      this.state.groups.find(obj => obj.pk === this.state.operation_pk)
+    );
+    let groups = [...this.state.groups];
+    groups[index] = obj;
+    this.setState({ groups: groups, groupSelected: obj });
+  };
+
+  updateSize = () => {
+    // Decide if sidebars hide/not
+    let width = window.outerWidth;
+    if (width < 800) {
+      this.setState({ displayl: true, displayr: true });
+    } else {
+      this.setState({ displayr: false, displayl: false });
+    }
+  };
+
+  render() {
+    let {
+      groupSelected: group,
+      active,
+      activeItem,
+      visible,
+      subgroup,
+      alertvisible,
+      modalvisible
+    } = this.state;
+    if (!this.state.isLoggedIn) {
+      return <Redirect to="/login" />;
+    }
+
+    if (this.state.notFound) {
+      return <Redirect to="/404" />;
+    }
+
+    if (this.state.redirect !== false) {
+      return <Redirect to={this.state.redirect} />;
+    }
+
+    return (
+      <div>
+        <MessageDisplay
+          message={this.state.message.message}
+          header={this.state.message.header}
+          type={this.state.message.type}
+        />
+        {this.state.loading ? (
+          <div>
+            <Dimmer active inverted>
+              <Loader size="medium">Fetching Groups..</Loader>
+            </Dimmer>
+          </div>
+        ) : (
+          <Fragment>
+            {this.state.alertloading ? (
+              <Dimmer active>
+                <Loader content="Loading..." />
+              </Dimmer>
+            ) : (
+              ""
+            )}
+            <Transition animation="scale" duration={400} visible={alertvisible}>
+              <Modal open={alertvisible} basic size="small">
+                <Header icon="exclamation triangle" content="Are you sure ?" />
+                <Modal.Content>
+                  <p>{this.state.alertContent}</p>
+                </Modal.Content>
+                <Modal.Actions>
+                  <Button
+                    basic
+                    color="red"
+                    inverted
+                    onClick={() => this.setState({ alertvisible: false })}
+                  >
+                    <Icon name="remove" /> No
+                  </Button>
+                  <Button
+                    color="green"
+                    inverted
+                    onClick={this.handleAlertClick}
+                  >
+                    <Icon name="checkmark" /> Yes
+                  </Button>
+                </Modal.Actions>
+              </Modal>
+            </Transition>
+
+            <Transition animation="scale" duration={400} visible={modalvisible}>
+              <Modal open={modalvisible} centered={false}>
+                <Modal.Header>
+                  Update Group ?
+                  <Icon
+                    name="close"
+                    style={{ float: "right", cursor: "pointer", color: "red" }}
+                    onClick={this.handleModalClose}
+                  />
+                </Modal.Header>
+                <Modal.Content>
+                  <Form id="groupupdate">
+                    <Grid columns="equal">
+                      <Grid.Row>
+                        <Grid.Column />
+                        <Grid.Column textAlign="center">
+                          <Input
+                            icon="users"
+                            type="text"
+                            name="groupname"
+                            iconPosition="left"
+                            placeholder="Group Name"
+                            value={this.state.groupname}
+                            onChange={this.handleChange}
+                            style={{ marginBottom: 15, width: "100%" }}
+                          />
+                          <TextArea
+                            placeholder="Tell us more"
+                            name="groupabout"
+                            value={this.state.groupabout}
+                            onChange={this.handleChange}
+                            style={{ marginBottom: 15 }}
+                            rows={4}
+                          />
+
+                          <div style={{ textAlign: "center" }}>
+                            <input
+                              style={{ display: "none" }}
+                              type="file"
+                              id="postfile"
+                              onChange={e => {
+                                let file = e.target.files[0];
+                                let type = file.type.split("/")[0];
+                                if (type === "image") {
+                                  this.setState({ grouppic: file });
+                                } else {
+                                  this.props.setMessage({
+                                    message: "Only image files are accepted",
+                                    type: 1,
+                                    header: "Error"
+                                  });
+                                }
+                              }}
+                            />
+                            <label
+                              htmlFor="postfile"
+                              style={{ cursor: "pointer" }}
+                            >
+                              Update Pic{" "}
+                              {this.state.grouppic !== "" &&
+                              this.state.grouppic.name.length >= 20
+                                ? this.state.grouppic.name.substr(0, 19) + ".."
+                                : this.state.grouppic.name}
+                            </label>
+                          </div>
+                          <br />
+                          <Button
+                            disabled={this.state.formloading}
+                            onClick={this.handleUpdate}
+                            loading={this.state.formloading}
+                            secondary
+                            className="updateexist"
+                          >
+                            Update Existing
+                          </Button>
+
+                          <Divider horizontal />
+                        </Grid.Column>
+
+                        <Grid.Column />
+                      </Grid.Row>
+                    </Grid>
+                  </Form>
+                </Modal.Content>
+              </Modal>
+            </Transition>
+
+            <NavBar
+              display={window.innerWidth < 800}
+              set={this.set}
+              displayl={this.state.displayl}
+              displayr={this.state.displayr}
+              active={1}
+              search={!this.isempty(group)}
+              func={this.handleSearch}
+              group={this.state.groupSelected}
+              subgroup={this.state.subgroup}
+            />
+
+            {this.state.loader ? (
+              <Dimmer active>
+                <Loader name="loading..." />
+              </Dimmer>
+            ) : (
+              ""
+            )}
+            <Transition animation="scale" duration={400} visible={visible}>
+              <Modal open={visible} centered={false}>
+                <Modal.Header>
+                  Add a new Group ?
+                  <Icon
+                    name="close"
+                    style={{ float: "right", color: "red", cursor: "pointer" }}
+                    onClick={this.handleModalClose}
+                  />
+                </Modal.Header>
+                <Modal.Content>
+                  <Form id="groupcreate">
+                    <Grid columns="equal">
+                      <Grid.Row>
+                        <Grid.Column />
+                        <Grid.Column textAlign="center">
+                          <Input
+                            icon="users"
+                            type="text"
+                            name="groupname"
+                            iconPosition="left"
+                            placeholder="Group Name"
+                            value={this.state.gorupname}
+                            onChange={this.handleChange}
+                            style={{ marginBottom: 15, width: "100%" }}
+                          />
+                          <TextArea
+                            placeholder="Tell us more"
+                            name="groupabout"
+                            value={this.state.groupabout}
+                            onChange={this.handleChange}
+                            style={{ marginBottom: 15 }}
+                            rows={4}
+                          />
+                          <div style={{ textAlign: "center" }}>
+                            <input
+                              style={{ display: "none" }}
+                              type="file"
+                              id="postfile"
+                              onChange={e => {
+                                let file = e.target.files[0];
+                                let type = file.type.split("/")[0];
+                                if (type === "image") {
+                                  this.setState({ grouppic: file });
+                                } else {
+                                  this.props.setMessage({
+                                    message: "Only image files are accepted",
+                                    type: 1,
+                                    header: "Error"
+                                  });
+                                }
+                              }}
+                            />
+                            <label
+                              htmlFor="postfile"
+                              style={{ cursor: "pointer" }}
+                            >
+                              Add image / file{" "}
+                              {this.state.grouppic !== "" &&
+                              this.state.grouppic.name.length >= 20
+                                ? this.state.grouppic.name.substr(0, 19) + ".."
+                                : this.state.grouppic.name}
+                            </label>
+                          </div>
+                          <br />
+                          <Button
+                            disabled={this.state.formloading}
+                            onClick={this.HandleFormSubmit}
+                            loading={this.state.formloading}
+                            secondary
+                            className="addnew"
+                          >
+                            Add new
+                          </Button>
+                          <Divider horizontal />
+                        </Grid.Column>
+
+                        <Grid.Column />
+                      </Grid.Row>
+                    </Grid>
+                  </Form>
+                </Modal.Content>
+              </Modal>
+            </Transition>
+            <Sidebar className="sidebar_compon" visible={!this.state.displayl}>
+              <div style={{ marginTop: 20, marginLeft: 20 }}>
+                {this.state.groups.length === 0 ? (
+                  <Fragment>
+                    <div style={{ textAlign: "center" }}>
+                      <b>No groups currently</b>
+                    </div>
+
+                    <div id="addgroup">
+                      <Button
+                        style={{ marginLeft: 5, marginTop: 10 }}
+                        onClick={() =>
+                          this.setState({
+                            visible: true,
+                            message: { message: false, header: "", type: 1 }
+                          })
+                        }
+                      >
+                        <div className="button_icon">
+                          <Icon style={{ zIndex: 10 }} name="add" />
+                        </div>
+                        Add new Group
+                      </Button>
+                    </div>
+                  </Fragment>
+                ) : (
+                  <Menu vertical style={{ width: "100%" }} text>
+                    <Scrollbars
+                      autoHide
+                      autoHideTimeout={1000}
+                      autoHeight
+                      autoHeightMax={"70vh"}
+                    >
+                      {this.state.groups.map((obj, index) => (
+                        <Fragment key={index}>
+                          <Menu.Item
+                            className={
+                              activeItem === obj.pk
+                                ? "menu_item_select"
+                                : "menu_item_compon"
+                            }
+                            onMouseEnter={() =>
+                              this.setState({ hover: obj.pk })
+                            }
+                            onMouseLeave={() => this.setState({ hover: false })}
+                            key={index}
+                            name={obj.name}
+                            active={activeItem === obj.pk}
+                            style={
+                              activeItem === obj.pk
+                                ? { background: "#ffffff" }
+                                : {}
+                            }
+                            onClick={() => {
+                              if (hoverselect) {
+                                hoverselect = false;
+                              } else {
+                                this.handleGroupSelect(obj);
+                              }
+                            }}
+                          >
+                            <Image
+                              src={obj.pic}
+                              style={{ height: 35, width: 35 }}
+                              avatar
+                            />
+                            <b>{obj.name}</b>
+                            {this.state.hover === obj.pk ? (
+                              <Dropdown
+                                style={{ float: "right", marginTop: 10 }}
+                                icon={
+                                  <Icon
+                                    name="cog"
+                                    onClick={() => {
+                                      hoverselect = true;
+                                    }}
+                                  />
+                                }
+                                direction="left"
+                              >
+                                <Dropdown.Menu>
+                                  {obj.edit ? (
+                                    <Fragment>
+                                      <Dropdown.Item
+                                        onClick={() =>
+                                          this.setState({
+                                            operation_pk: obj.pk,
+                                            modalvisible: true,
+                                            groupname: obj.name,
+                                            groupabout: obj.about
+                                          })
+                                        }
+                                      >
+                                        <div style={{ color: "#28abe2" }}>
+                                          <Icon name="edit outline" />
+                                          <b>Update</b>
+                                        </div>
+                                      </Dropdown.Item>
+                                      <Dropdown.Divider />
+                                      <Dropdown.Item
+                                        onClick={() => {
+                                          this.setState({
+                                            operation_pk: obj.pk
+                                          });
+                                          this.handleAlert(0);
+                                        }}
+                                      >
+                                        <div style={{ color: "#e8293c" }}>
+                                          <Icon name="trash alternate outline" />
+                                          Delete
+                                        </div>
+                                      </Dropdown.Item>
+                                    </Fragment>
+                                  ) : (
+                                    <Dropdown.Item
+                                      onClick={() => {
+                                        this.setState({ operation_pk: obj.pk });
+                                        this.handleAlert(1);
+                                      }}
+                                    >
+                                      <div style={{ color: "#e8293c" }}>
+                                        <Icon name="trash alternate outline" />
+                                        Exit
+                                      </div>
+                                    </Dropdown.Item>
+                                  )}
+                                </Dropdown.Menu>
+                              </Dropdown>
+                            ) : (
+                              ""
+                            )}
+                          </Menu.Item>
+                          {activeItem === obj.pk ? (
+                            <GroupSelected
+                              group={group}
+                              uri={this.props.location.pathname}
+                              params={this.state.pksearch}
+                              renderpost={this.state.renderpost}
+                              subgroup={subgroup}
+                              set={this.set}
+                              change={this.state.change}
+                              setLoader={this.setLoader}
+                              setMessage={this.setMessage}
+                            />
+                          ) : (
+                            ""
+                          )}
+                          {index === this.state.groups.length - 1 &&
+                          activeItem !== obj.pk ? (
+                            <Fragment>
+                              <br />
+                              <br />
+                              <br />
+                            </Fragment>
+                          ) : (
+                            ""
+                          )}
+                        </Fragment>
+                      ))}
+                    </Scrollbars>
+                    <div id="addgroup">
+                      <Button
+                        onClick={() =>
+                          this.setState({
+                            visible: true,
+                            message: { message: false, header: "", type: 1 }
+                          })
+                        }
+                      >
+                        <div className="button_icon">
+                          <Icon style={{ zIndex: 10 }} name="add" />
+                        </div>
+                        Add new Group
+                      </Button>
+                    </div>
+                  </Menu>
+                )}
+              </div>
+            </Sidebar>
+            <div
+              className="main_home_page"
+              style={
+                !this.state.displayl
+                  ? { width: "56vw", marginLeft: "22vw" }
+                  : {}
+              }
+            >
+              {this.isempty(group) ? (
+                <div
+                  style={{
+                    paddingTop: "calc(100px + 15vh)",
+                    textAlign: "center",
+                    overflow: "hidden"
+                  }}
+                >
+                  <h2>Select a Group to Continue</h2>
+                  <Grid columns="equal">
+                    <Grid.Row>
+                      <Grid.Column />
+                      <Grid.Column>
+                        <Divider
+                          horizontal
+                          style={{ width: "10vw", marginLeft: 35 }}
+                        >
+                          Or
+                        </Divider>
+                      </Grid.Column>
+                      <Grid.Column />
+                    </Grid.Row>
+                  </Grid>
+                  <h2>Create a new Group</h2>
+                </div>
+              ) : (
+                <Fragment>
+                  {this.isempty(subgroup) ? (
+                    <Fragment>
+                      <div
+                        style={{
+                          paddingTop: "calc(100px + 15vh)",
+                          textAlign: "center"
+                        }}
+                      >
+                        <h2>Select a SubGroup to display the posts</h2>
+                      </div>
+                    </Fragment>
+                  ) : (
+                    <div style={{ marginTop: 100 }}>
+                      <BasePost
+                        ref={this.child}
+                        renderpost={this.state.renderpost}
+                        setLoader={this.setLoader}
+                        group={this.state.subgroup}
+                        setMessage={this.setMessage}
+                        pksearch={this.state.pksearch}
+                      />
+                    </div>
+                  )}
+                </Fragment>
+              )}
+            </div>
+            <Sidebar
+              className="sidebar_compon"
+              direction="right"
+              visible={!this.state.displayr}
+            >
+              {!this.isempty(group) ? (
+                <Fragment>
+                  <Notify group={group} set={this.set} />
+                  <UserList group={group} />
+                  <Invite group={group} setMessage={this.setMessage} />
+                </Fragment>
+              ) : (
+                ""
+              )}
+            </Sidebar>
+          </Fragment>
+        )}
+      </div>
+    );
+  }
+}
+
+class GroupSelected extends Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      isLoggedIn: getCookie("token")[1],
+      group: this.props.group,
+      visible: true,
+      modalvisible: false,
+      formloading: false,
+      message: { message: false, header: "", type: 1 },
+      alertAction: 0,
+      alertMessage: "",
+      alertvisible: false,
+      activeItem:
+        Object.entries(this.props.subgroup).length !== 0
+          ? this.props.subgroup.pk
+          : false,
+      name: "",
+      subgroupdel: false,
+      subgroupupdate: false,
+      hover: -1,
+      operation_pk: -1
+    };
+  }
+
+  componentDidUpdate = (prevProps, prevState) => {
+    if (
+      this.props.group !== prevProps.group ||
+      prevProps.change != this.props.change
+    ) {
+      console.log("came in");
+      this.setState({
+        group: this.props.group
+      });
+    }
+
+    if (this.props.subgroup !== prevProps.subgroup) {
+      console.log("came here for cons");
+      console.log(this.props.subgroup);
+      this.setState({ activeItem: this.props.subgroup.pk });
+    }
+  };
+
+  handleChange = e => {
+    let { name, value } = e.target;
+    this.setState({ [name]: value });
+  };
+
+  handleModalClose = () => {
+    this.setState({
+      modalvisible: false
+    });
   };
 
   handleSubGroupSelect = obj => {
-    this.setState({
-      activeItem: obj.pk,
-      active: false
-    });
     let elem = {
       subgroup: obj,
       pksearch: false,
       renderpost: !this.props.renderpost,
-      redirect: this.props.url !== "/home" ? "/home" : false
+      redirect: this.props.uri !== "/home" ? "/home" : false
     };
+    this.setState({
+      activeItem: obj.pk
+    });
     this.props.set(elem);
   };
 
@@ -716,7 +994,7 @@ class GroupSelected extends Component {
       message: { message: false, header: "", type: 1 }
     });
     fetchAsynchronous(
-      subGroupCreate + this.state.group.pk + "/",
+      subGroupCreate + this.state.operation_pk + "/",
       "POST",
       { name: this.state.name },
       headers,
@@ -733,6 +1011,7 @@ class GroupSelected extends Component {
           this.setState({
             name: "",
             operation: -1,
+            operation_pk: -1,
             formloading: false,
             subgroupupdate: false
           });
@@ -753,7 +1032,7 @@ class GroupSelected extends Component {
     this.setState({ subgroupdel: false });
     this.props.setLoader(true);
     fetchAsynchronous(
-      subGroupUpdate + this.props.subgroup.pk + "/",
+      subGroupUpdate + this.state.operation_pk + "/",
       "DELETE",
       undefined,
       { Authorization: "Token " + getCookie("token")[0].value },
@@ -765,9 +1044,16 @@ class GroupSelected extends Component {
         });
         this.props.setLoader(false);
         let group = Object.assign({}, this.state.group);
-        let index = group.subgroup_set.indexOf(this.props.subgroup);
+        let index = group.subgroup_set.indexOf(
+          group.subgroup_set.find(obj => obj.pk === this.state.operation_pk)
+        );
         group.subgroup_set.splice(index, 1);
-        this.props.set({ groupSelected: group, subgroup: {}, pksearch: false });
+        this.props.set({
+          groupSelected: group,
+          subgroup: {},
+          pksearch: false,
+          operation_pk: -1
+        });
       }
     );
   };
@@ -783,7 +1069,7 @@ class GroupSelected extends Component {
       message: { message: false, header: "", type: 1 }
     });
     fetchAsynchronous(
-      subGroupUpdate + this.props.subgroup.pk + "/",
+      subGroupUpdate + this.state.operation_pk + "/",
       "PATCH",
       { name: this.state.name },
       headers,
@@ -800,6 +1086,7 @@ class GroupSelected extends Component {
           this.setState({
             name: "",
             operation: -1,
+            operation_pk: -1,
             formloading: false,
             subgroupupdate: false
           });
@@ -820,17 +1107,10 @@ class GroupSelected extends Component {
   };
 
   render = () => {
-    let { group, modalvisible, alertvisible, activeItem, active } = this.state;
+    let { group, active } = this.state;
 
     return (
       <Fragment>
-        {this.state.alertloading ? (
-          <Dimmer active>
-            <Loader content="Loading..." />
-          </Dimmer>
-        ) : (
-          ""
-        )}
         <Transition
           animation="scale"
           duration={400}
@@ -871,10 +1151,10 @@ class GroupSelected extends Component {
           <Modal open={this.state.subgroupupdate} centered={false}>
             <Modal.Header>
               {this.state.operation === 0
-                ? "Create SubGroup"
+                ? "Add new SubGroup"
                 : "Update Subgroup"}
-              <Button
-                icon="close"
+              <Icon
+                name="close"
                 onClick={() => {
                   this.setState({
                     subgroupupdate: false,
@@ -883,264 +1163,167 @@ class GroupSelected extends Component {
                     formloading: false
                   });
                 }}
-                circular
-                negative
-                style={{
-                  float: "right"
-                }}
+                style={{ float: "right", color: "red", cursor: "pointer" }}
               />
             </Modal.Header>
             <Modal.Content>
-              <Grid columns="equal">
-                <Grid.Row>
-                  <Grid.Column />
-                  <Grid.Column textAlign="center">
-                    <Input
-                      icon="users"
-                      type="text"
-                      name="name"
-                      iconPosition="left"
-                      placeholder="Subgroup Name"
-                      value={this.state.name}
-                      onChange={this.handleChange}
-                      style={{ marginBottom: 15 }}
-                    />
-                    <Button
-                      disabled={this.state.formloading}
-                      onClick={
-                        this.state.operation === 0
-                          ? this.handleSubGroupCreate
-                          : this.handleSubgroupUpdate
+              <Form id="subgroup_create_form">
+                <Grid columns="equal">
+                  <Grid.Row>
+                    <Grid.Column />
+                    <Grid.Column textAlign="center">
+                      <Input
+                        icon="users"
+                        type="text"
+                        name="name"
+                        iconPosition="left"
+                        placeholder="Subgroup Name"
+                        value={this.state.name}
+                        onChange={this.handleChange}
+                        style={{ marginBottom: 15 }}
+                      />
+                      <Button
+                        disabled={this.state.formloading}
+                        onClick={
+                          this.state.operation === 0
+                            ? this.handleSubGroupCreate
+                            : this.handleSubgroupUpdate
+                        }
+                        secondary
+                        loading={this.state.formloading}
+                        className="addnewsub"
+                      >
+                        {this.state.operation === 0
+                          ? "Create Subgroup"
+                          : "Update Subgroup"}
+                      </Button>
+                      <Divider horizontal />
+                    </Grid.Column>
+
+                    <Grid.Column />
+                  </Grid.Row>
+                </Grid>
+              </Form>
+            </Modal.Content>
+          </Modal>
+        </Transition>
+        <Fragment>
+          <div id="subgroups">
+            <Menu vertical style={{ width: "100%" }} text>
+              <React.Fragment>
+                {group.subgroup_set.map((obj, index) => (
+                  <Menu.Item
+                    key={index}
+                    style={{ marginLeft: "3vw", color: "#8f939b" }}
+                    name={obj.name}
+                    active={this.state.activeItem === obj.pk}
+                    onMouseLeave={() => this.setState({ hover: false })}
+                    onMouseEnter={() => this.setState({ hover: obj.pk })}
+                    className="subgroup_items"
+                    onClick={() => {
+                      if (hoversub) {
+                        hoversub = false;
+                      } else {
+                        console.log("Came to the function call");
+                        this.handleSubGroupSelect(obj);
                       }
-                      loading={this.state.formloading}
-                      secondary
-                    >
-                      {this.state.operation === 0
-                        ? "Create Subgroup"
-                        : "Update Subgroup"}
-                    </Button>
-                    <Divider horizontal />
-                  </Grid.Column>
-
-                  <Grid.Column />
-                </Grid.Row>
-              </Grid>
-            </Modal.Content>
-          </Modal>
-        </Transition>
-
-        <Transition animation="scale" duration={400} visible={alertvisible}>
-          <Modal open={alertvisible} basic size="small">
-            <Header icon="exclamation triangle" content="Are you sure ?" />
-            <Modal.Content>
-              <p>{this.state.alertContent}</p>
-            </Modal.Content>
-            <Modal.Actions>
+                    }}
+                  >
+                    {obj.pk === this.state.activeItem ? (
+                      <Icon name="angle double right" />
+                    ) : (
+                      ""
+                    )}
+                    # <b>{obj.name}</b>
+                    {this.state.hover === obj.pk ? (
+                      <Dropdown
+                        style={{ float: "right" }}
+                        icon={
+                          <Icon
+                            name="cog"
+                            onClick={() => {
+                              hoversub = true;
+                            }}
+                          />
+                        }
+                        direction="left"
+                      >
+                        <Dropdown.Menu>
+                          <Dropdown.Item
+                            onClick={() => {
+                              this.setState({
+                                formloading: false,
+                                operation: 1,
+                                subgroupupdate: true,
+                                name: obj.name,
+                                operation_pk: obj.pk
+                              });
+                              let message = {
+                                message: false,
+                                header: "",
+                                type: ""
+                              };
+                              this.props.setMessage(message);
+                            }}
+                          >
+                            <div style={{ color: "#28abe2" }}>
+                              <Icon name="edit outline" />
+                              <b>Update</b>
+                            </div>
+                          </Dropdown.Item>
+                          <Dropdown.Divider />
+                          <Dropdown.Item
+                            onClick={() =>
+                              this.setState({
+                                subgroupdel: true,
+                                operation_pk: obj.pk
+                              })
+                            }
+                          >
+                            <div style={{ color: "#e8293c" }}>
+                              <Icon name="trash alternate outline" />
+                              Delete
+                            </div>
+                          </Dropdown.Item>
+                        </Dropdown.Menu>
+                      </Dropdown>
+                    ) : (
+                      ""
+                    )}
+                  </Menu.Item>
+                ))}
+              </React.Fragment>
+            </Menu>
+            <div id="addsubgroup">
               <Button
-                basic
-                color="red"
-                inverted
-                onClick={() => this.setState({ alertvisible: false })}
-              >
-                <Icon name="remove" /> No
-              </Button>
-              <Button color="green" inverted onClick={this.handleAlertClick}>
-                <Icon name="checkmark" /> Yes
-              </Button>
-            </Modal.Actions>
-          </Modal>
-        </Transition>
-
-        <Transition animation="scale" duration={400} visible={modalvisible}>
-          <Modal open={modalvisible} centered={false}>
-            <Modal.Header>
-              Update Group ?
-              <Button
-                icon="close"
-                onClick={this.handleModalClose}
-                circular
-                negative
-                style={{
-                  float: "right"
-                }}
-              />
-            </Modal.Header>
-            <Modal.Content>
-              <Grid columns="equal">
-                <Grid.Row>
-                  <Grid.Column />
-                  <Grid.Column textAlign="center">
-                    <Input
-                      icon="users"
-                      type="text"
-                      name="groupname"
-                      iconPosition="left"
-                      placeholder="Group Name"
-                      value={this.state.groupname}
-                      onChange={this.handleChange}
-                      style={{ marginBottom: 15 }}
-                    />
-                    <TextArea
-                      placeholder="Tell us more"
-                      name="groupabout"
-                      value={this.state.groupabout}
-                      onChange={this.handleChange}
-                      style={{ marginBottom: 15 }}
-                      rows={4}
-                    />
-                    <Button
-                      disabled={this.state.formloading}
-                      onClick={this.handleUpdate}
-                      loading={this.state.formloading}
-                      secondary
-                    >
-                      Update Existing
-                    </Button>
-                    <Divider horizontal />
-                  </Grid.Column>
-
-                  <Grid.Column />
-                </Grid.Row>
-              </Grid>
-            </Modal.Content>
-          </Modal>
-        </Transition>
-        <Transition
-          animation="scale"
-          duration={400}
-          visible={this.state.visible}
-        >
-          <Fragment>
-            <h2>{group.name}</h2>
-            {group.edit ? (
-              <Button.Group style={{ width: "90%" }}>
-                <Button
-                  onClick={() => {
-                    this.setState({ modalvisible: true });
-                    let message = {
-                      message: false,
-                      header: "",
-                      type: ""
-                    };
-                    this.props.setMessage(message);
-                  }}
-                >
-                  Update
-                </Button>
-                <Button.Or style={{ color: "black" }} />
-                <Button onClick={() => this.handleAlert(0)} negative>
-                  Delete
-                </Button>
-              </Button.Group>
-            ) : (
-              ""
-            )}
-            <Accordion>
-              <Accordion.Title
-                active={active}
-                index={0}
-                onClick={() =>
+                style={{ marginLeft: "1vw" }}
+                onClick={() => {
                   this.setState({
-                    active: active ? false : true
-                  })
-                }
+                    subgroupupdate: true,
+                    name: "",
+                    formloading: false,
+                    operation: 0,
+                    operation_pk: this.state.group.pk
+                  });
+                  this.props.setMessage({
+                    message: false,
+                    header: "",
+                    type: 1
+                  });
+                }}
               >
-                <Icon name="users" />
-                Sub-Groups <Icon name="dropdown" />
-              </Accordion.Title>
-              <Transition animation="drop" duration={500} visible={active}>
-                <Accordion.Content active={active}>
-                  <div style={{ width: "auto", textAlign: "center" }}>
-                    <Scrollbars style={{ height: "25vh" }}>
-                      <Menu vertical style={{ width: "100%" }}>
-                        <React.Fragment>
-                          {group.subgroup_set.map((obj, index) => (
-                            <Menu.Item
-                              key={index}
-                              name={obj.name}
-                              active={this.state.activeItem === obj.pk}
-                              style={{ cursor: "pointer" }}
-                              onClick={() => this.handleSubGroupSelect(obj)}
-                            >
-                              {obj.name}
-                            </Menu.Item>
-                          ))}
-                        </React.Fragment>
-                      </Menu>
-                    </Scrollbars>
-                  </div>
-                </Accordion.Content>
-              </Transition>
-            </Accordion>
-            <Button
-              secondary
-              style={{ width: "90%" }}
-              onClick={() => {
-                this.setState({
-                  subgroupupdate: true,
-                  name: "",
-                  formloading: false,
-                  operation: 0
-                });
-                this.props.setMessage({ message: false, header: "", type: 1 });
-              }}
-            >
-              <Icon name="add" />
-              Add new SubGroup
-            </Button>
-            <br />
-            <br />
-            {Object.entries(this.props.subgroup).length !== 0 ? (
-              <Button.Group style={{ width: "90%" }}>
-                <Button
-                  onClick={() => {
-                    this.setState({
-                      formloading: false,
-                      operation: 1,
-                      subgroupupdate: true,
-                      name: this.props.subgroup.name
-                    });
-                    let message = {
-                      message: false,
-                      header: "",
-                      type: ""
-                    };
-                    this.props.setMessage(message);
-                  }}
-                >
-                  Update
-                </Button>
-                <Button.Or style={{ color: "black" }} />
-                <Button
-                  onClick={() =>
-                    this.setState({
-                      subgroupdel: true
-                    })
-                  }
-                  negative
-                >
-                  Delete
-                </Button>
-              </Button.Group>
-            ) : (
-              ""
-            )}
-            <h5>About Group: </h5>
-            <p style={{ width: "90%" }}>{group.about}</p>
-            <h5>Group Created By: </h5>
-            <p>{group.created_by}</p>
-            {!group.edit ? (
-              <Fragment>
-                <Button negative onClick={() => this.handleAlert(1)}>
-                  Exit group
-                </Button>
-              </Fragment>
-            ) : (
-              ""
-            )}
-            <br />
-          </Fragment>
-        </Transition>
+                <div className="button_icon">
+                  <Icon style={{ zIndex: 10 }} name="add" />
+                </div>
+                Add new SubGroup
+              </Button>
+            </div>
+            <h5 style={{ color: "#35b18a" }}>Group: </h5>
+            <p style={{ width: "90%", fontFamily: "Courier" }}>{group.about}</p>
+            <h5 style={{ color: "#35b18a" }}>Created By: </h5>
+            <a href="#">{group.created_by}</a>
+          </div>
+        </Fragment>
       </Fragment>
     );
   };

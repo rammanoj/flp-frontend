@@ -1,4 +1,4 @@
-const BASE_API_URI = "http://52.14.193.169/";
+const BASE_API_URI = "http://127.0.0.1:8000/";
 
 // method: POST
 export const signup = BASE_API_URI + "accounts/signup/";
@@ -95,6 +95,25 @@ export const imageFormats = [
   "GIF",
   "BMP",
   "WEBP"
+];
+
+// contents of the carousel
+export const contents = [
+  {
+    header: "This is the header 1",
+    message:
+      "these are the contents to the header 1. these are some random carousel contents. these can be updated"
+  },
+  {
+    header: "This is the header 2",
+    message:
+      "these are the contents to the header 2. these are some random carousel contents. these can be updated"
+  },
+  {
+    header: "This is the header 3",
+    message:
+      "these are the contents to the header 3. these are some random carousel contents. these can be updated"
+  }
 ];
 
 // template colors

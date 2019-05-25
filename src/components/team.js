@@ -1,6 +1,6 @@
 import React, { Fragment, Component } from "react";
 import { getCookie } from "./cookie";
-import { Loader, Icon, Grid, Popup } from "semantic-ui-react";
+import { Loader, Icon, Image } from "semantic-ui-react";
 import Pagination from "semantic-ui-react-button-pagination";
 import Scrollbars from "react-custom-scrollbars";
 import { paginationCount, TeamUserList } from "./../api";
@@ -102,9 +102,9 @@ export default class UserList extends Component {
   render = () => {
     return (
       <Fragment>
-        <div style={{ marginLeft: 10 }}>
-          <Icon name="users" />
-          <h4 style={{ display: "inline" }}>Team</h4>
+        <br />
+        <div style={{ textAlign: "center" }}>
+          <p style={{ color: "#5e6160" }}>Team Members</p>
         </div>
         <Scrollbars style={{ height: "30vh" }}>
           {this.state.loading ? (
@@ -119,40 +119,27 @@ export default class UserList extends Component {
                 </Fragment>
               ) : (
                 <Fragment>
-                  <Grid style={{ overflowX: "hidden" }}>
-                    {this.state.users.map((obj, index) => (
-                      <Popup
-                        key={index}
-                        trigger={
-                          <Grid.Column
-                            width={3}
-                            style={{ overflowX: "hidden" }}
-                          >
-                            <div key={index}>
-                              <div style={{ cursor: "pointer" }}>
-                                <div style={{ textAlign: "center" }}>
-                                  <Icon
-                                    name="user"
-                                    circular
-                                    inverted
-                                    size={40}
-                                    style={{ background: "#c2c4c6" }}
-                                  />{" "}
-                                  <span>
-                                    {obj.username.length > 6
-                                      ? obj.username.substr(0, 4) + ".."
-                                      : obj.username}
-                                  </span>
-                                </div>
-                              </div>
-                            </div>
-                          </Grid.Column>
-                        }
-                      >
-                        {obj.username}
-                      </Popup>
-                    ))}
-                  </Grid>
+                  {this.state.users.map((obj, index) => (
+                    <div key={index} id="team_users">
+                      <div>
+                        {obj.pic !== "" ? (
+                          <Image src={obj.pic} avatar />
+                        ) : (
+                          <Icon
+                            name="user"
+                            circular
+                            inverted
+                            style={{ background: "#c2c4c6" }}
+                          />
+                        )}
+                        <span>
+                          {obj.username.length > 25
+                            ? obj.username.substr(0, 23) + ".."
+                            : obj.username}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
                   {this.state.pagination === true ? (
                     <div
                       style={{

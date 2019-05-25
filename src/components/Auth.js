@@ -14,6 +14,47 @@ import {
   Dimmer,
   Loader
 } from "semantic-ui-react";
+import { contents as carousel } from "./../api";
+import "./../App.css";
+import { CSSTransition } from "react-transition-group";
+
+class Carousel extends Component {
+  state = {
+    contents: carousel,
+    selected: 0,
+    visible: false,
+    select: new Array(carousel.length)
+  };
+
+  componentDidMount = () => {
+    this.setState({ visible: true });
+  };
+
+  render = () => {
+    let { contents, selected } = this.state;
+    return (
+      <Fragment>
+        <CSSTransition in={true} appear={true} timeout={2000} classNames="fade">
+          <div>
+            <h3>{contents[selected].header}</h3>
+            <p>{contents[selected].message}</p>
+          </div>
+        </CSSTransition>
+        <br />
+        <br />
+        {contents.map((obj, index) => (
+          <span
+            key={index}
+            onClick={() => {
+              this.setState({ selected: index, visible: false, select: false });
+            }}
+            className="dot"
+          />
+        ))}
+      </Fragment>
+    );
+  };
+}
 
 class Login extends Component {
   constructor(props) {
@@ -104,83 +145,138 @@ class Login extends Component {
     if (this.state.isLoggedIn) {
       return <Redirect to="/home" />;
     } else {
-      document.body.style = "background: #ffffff;";
       return (
         <Fragment>
-          <NavBar active={1} />
+          <div id="login">
+            <NavBar active={1} />
 
-          <MessageDisplay
-            message={this.state.message}
-            header="Error"
-            type={1}
-          />
+            <MessageDisplay
+              message={this.state.message}
+              header="Error"
+              type={1}
+            />
 
-          <Transition
-            animation="scale"
-            visible={this.state.visible}
-            duration={400}
-          >
-            <Grid>
-              <Grid.Row textAlign="center">
-                <Grid.Column width={6} />
-                <Grid.Column width={4}>
-                  <div
-                    style={{
-                      marginTop: "calc(50px + 10vh)",
-                      textAlign: "center"
-                    }}
-                  >
-                    <h2>Login Form</h2>
-                    <form>
-                      <Card style={{ width: "100%", padding: 10 }}>
-                        <Input
-                          icon="users"
-                          iconPosition="left"
-                          placeholder="Username / Email"
-                          name="user"
-                          style={{ marginBottom: 15 }}
-                          value={this.state.username}
-                          onChange={this.handleChange}
-                        />
+            <Transition
+              animation="scale"
+              visible={this.state.visible}
+              duration={400}
+            >
+              <Grid>
+                <Grid.Row style={{ height: "89.5vh" }}>
+                  <Grid.Column width={3} />
+                  <Grid.Column width={10}>
+                    <Card className="card_comp">
+                      <Grid style={{ height: "100%" }}>
+                        <Grid.Row style={{ height: "100%" }}>
+                          <Grid.Column width={8}>
+                            <div className="carousel_compon">
+                              <h2
+                                style={{
+                                  marginBottom: "5vh",
+                                  marginTop: "10vh"
+                                }}
+                              >
+                                BrandFactory Inc.
+                              </h2>
+                              <Carousel />
+                            </div>
+                          </Grid.Column>
+                          <Grid.Column width={8}>
+                            <form className="login_form">
+                              <h2 className="header">Login Please</h2>
+                              <Grid style={{ height: "100%" }}>
+                                <Grid.Row>
+                                  <Grid.Column width={3} />
+                                  <Grid.Column width={10}>
+                                    <Input
+                                      icon="users"
+                                      iconPosition="left"
+                                      placeholder="Username / Email"
+                                      name="user"
+                                      value={this.state.username}
+                                      onChange={this.handleChange}
+                                    />
+                                  </Grid.Column>
+                                  <Grid.Column width={3} />
+                                </Grid.Row>
+                                <Grid.Row>
+                                  <Grid.Column width={3} />
+                                  <Grid.Column width={10}>
+                                    <Input
+                                      icon="lock"
+                                      iconPosition="left"
+                                      placeholder="Password"
+                                      name="password"
+                                      type="password"
+                                      value={this.state.password}
+                                      onChange={this.handleChange}
+                                    />
+                                  </Grid.Column>
+                                  <Grid.Column width={3} />
+                                </Grid.Row>
+                                <Grid.Row>
+                                  <Grid.Column width={5} />
+                                  <Grid.Column width={6}>
+                                    <div style={{ justifyContent: "center" }}>
+                                      <Checkbox
+                                        label="Remember me"
+                                        defaultChecked
+                                      />
+                                    </div>
+                                  </Grid.Column>
 
-                        <Input
-                          icon="lock"
-                          iconPosition="left"
-                          placeholder="Password"
-                          name="password"
-                          type="password"
-                          style={{ marginBottom: 15 }}
-                          value={this.state.password}
-                          onChange={this.handleChange}
-                        />
-                        <div style={{ justifyContent: "center" }}>
-                          <Checkbox
-                            label="Remember me"
-                            style={{ marginBottom: 15 }}
-                            defaultChecked
-                          />
-                        </div>
-                        <Button
-                          disabled={this.state.loading}
-                          onClick={this.HandleFormSubmit}
-                          loading={this.state.loading}
-                          secondary
-                        >
-                          Login
-                        </Button>
-                      </Card>
-                    </form>
-                    <Card style={{ padding: 10, width: "100%" }}>
-                      <Link to="/forgotpassword">
-                        Don't Remember Password ?
-                      </Link>
+                                  <Grid.Column width={5} />
+                                </Grid.Row>
+                                <Grid.Row>
+                                  <Grid.Column width={3} />
+                                  <Grid.Column width={5}>
+                                    <Button
+                                      disabled={this.state.loading}
+                                      onClick={this.HandleFormSubmit}
+                                      loading={this.state.loading}
+                                      className="login_button"
+                                      type="submit"
+                                    >
+                                      Login
+                                    </Button>
+                                  </Grid.Column>
+                                  <Grid.Column width={5}>
+                                    <Button
+                                      className="signup_button"
+                                      as={Link}
+                                      to="/signup"
+                                    >
+                                      Signup
+                                    </Button>
+                                  </Grid.Column>
+
+                                  <Grid.Column width={3} />
+                                </Grid.Row>
+                                <Grid.Row>
+                                  <Grid.Column width={3} />
+                                  <Grid.Column width={10}>
+                                    <Link
+                                      to="/forgotpassword"
+                                      style={{ color: "#35b18a" }}
+                                    >
+                                      forgot your password ?
+                                    </Link>
+                                  </Grid.Column>
+                                  <Grid.Column width={3} />
+                                </Grid.Row>
+                              </Grid>
+                              <br />
+                            </form>
+                          </Grid.Column>
+                        </Grid.Row>
+                      </Grid>
                     </Card>
-                  </div>
-                </Grid.Column>
-                <Grid.Column width={6} />
-              </Grid.Row>
-            </Grid>
-          </Transition>
+                  </Grid.Column>
+                  <Grid.Column width={3} />
+                </Grid.Row>
+              </Grid>
+            </Transition>
+          </div>
         </Fragment>
       );
     }
@@ -248,67 +344,108 @@ class ForgotPassword extends React.Component {
 
       return (
         <Fragment>
-          <NavBar active={3} />
-
           <MessageDisplay
             message={this.state.message}
             header={this.state.error ? "Error" : "Success"}
             type={this.state.error ? 1 : 0}
           />
 
-          <Transition
-            animation="scale"
-            visible={this.state.visible}
-            duration={400}
-          >
-            <Grid>
-              <Grid.Row textAlign="center">
-                <Grid.Column width={6} />
-                <Grid.Column width={4}>
-                  <div
-                    style={{
-                      marginTop: "calc(50px + 10vh)",
-                      textAlign: "center"
-                    }}
-                  >
-                    <h2>Forgot Password ?</h2>
-                    <form>
-                      <Card style={{ width: "100%", padding: 10 }}>
-                        <Input
-                          icon="mail"
-                          type="email"
-                          iconPosition="left"
-                          placeholder="Enter email"
-                          name="email"
-                          style={{ marginBottom: 15 }}
-                          value={this.state.email}
-                          onChange={e =>
-                            this.setState({ email: e.target.value })
-                          }
-                        />
+          <div id="forgotpassword">
+            <NavBar active={3} />
 
-                        <Button
-                          disabled={this.state.loading}
-                          onClick={this.HandleFormSubmit}
-                          loading={this.state.loading}
-                          secondary
-                        >
-                          Validate
-                        </Button>
-                      </Card>
-                    </form>
-                    <Card style={{ padding: 10, width: "100%" }}>
-                      <div>
-                        <Link to="/signup">Signup</Link> |{" "}
-                        <Link to="/login">Login</Link>
-                      </div>
+            <Transition
+              animation="scale"
+              visible={this.state.visible}
+              duration={400}
+            >
+              <Grid>
+                <Grid.Row style={{ height: "89.5vh" }}>
+                  <Grid.Column width={3} />
+                  <Grid.Column width={10}>
+                    <Card className="card_comp">
+                      <Grid style={{ height: "100%" }}>
+                        <Grid.Row style={{ height: "100%" }}>
+                          <Grid.Column width={8}>
+                            <div className="carousel_compon">
+                              <h2
+                                style={{
+                                  marginBottom: "5vh",
+                                  marginTop: "10vh"
+                                }}
+                              >
+                                BrandFactory Inc.
+                              </h2>
+                              <Carousel />
+                            </div>
+                          </Grid.Column>
+                          <Grid.Column width={8}>
+                            <form className="forgotpassword_form">
+                              <h2 className="header">Forgot Password</h2>
+                              <Grid style={{ height: "100%" }}>
+                                <Grid.Row>
+                                  <Grid.Column width={3} />
+                                  <Grid.Column width={10}>
+                                    <Input
+                                      icon="mail"
+                                      type="email"
+                                      iconPosition="left"
+                                      placeholder="Enter email"
+                                      value={this.state.email}
+                                      onChange={e =>
+                                        this.setState({ email: e.target.value })
+                                      }
+                                    />
+                                  </Grid.Column>
+                                  <Grid.Column width={3} />
+                                </Grid.Row>
+
+                                <Grid.Row>
+                                  <Grid.Column width={6} />
+                                  <Grid.Column width={5}>
+                                    <Button
+                                      className="forgotpassword_button"
+                                      disabled={this.state.loading}
+                                      onClick={this.HandleFormSubmit}
+                                      loading={this.state.loading}
+                                      secondary
+                                    >
+                                      Validate
+                                    </Button>
+                                  </Grid.Column>
+                                </Grid.Row>
+                                <Grid.Row>
+                                  <Grid.Column width={6} />
+                                  <Grid.Column width={2}>
+                                    <Link
+                                      to="/login"
+                                      style={{ color: "#35b18a" }}
+                                    >
+                                      Login
+                                    </Link>
+                                  </Grid.Column>
+                                  <Grid.Column width={2}>
+                                    <Link
+                                      to="/signup"
+                                      style={{ color: "#35b18a" }}
+                                    >
+                                      Signup
+                                    </Link>
+                                  </Grid.Column>
+                                  <Grid.Column width={6} />
+                                </Grid.Row>
+                              </Grid>
+                              <br />
+                            </form>
+                          </Grid.Column>
+                        </Grid.Row>
+                      </Grid>
                     </Card>
-                  </div>
-                </Grid.Column>
-                <Grid.Column width={6} />
-              </Grid.Row>
-            </Grid>
-          </Transition>
+                  </Grid.Column>
+                  <Grid.Column width={3} />
+                </Grid.Row>
+              </Grid>
+            </Transition>
+          </div>
         </Fragment>
       );
     }
@@ -408,80 +545,127 @@ class Register extends React.Component {
             type={this.state.error === 1 ? 1 : 0}
           />
 
-          <Transition
-            animation="scale"
-            visible={this.state.visible}
-            duration={400}
-          >
-            <Grid>
-              <Grid.Row textAlign="center">
-                <Grid.Column width={6} />
-                <Grid.Column width={4}>
-                  <div
-                    style={{
-                      marginTop: "calc(50px + 10vh)",
-                      textAlign: "center"
-                    }}
-                  >
-                    <h2>Signup</h2>
-                    <form>
-                      <Card style={{ width: "100%", padding: 10 }}>
-                        <Input
-                          icon="users"
-                          type="text"
-                          iconPosition="left"
-                          placeholder="Enter Username"
-                          name="username"
-                          style={{ marginBottom: 15 }}
-                          value={this.state.username}
-                          onChange={this.handleChange}
-                        />
-                        <Input
-                          icon="mail"
-                          type="email"
-                          iconPosition="left"
-                          placeholder="Enter Email"
-                          name="email"
-                          style={{ marginBottom: 15 }}
-                          value={this.state.email}
-                          onChange={this.handleChange}
-                        />
-                        <Input
-                          icon="lock"
-                          type="password"
-                          iconPosition="left"
-                          placeholder="Enter Password"
-                          name="password"
-                          style={{ marginBottom: 15 }}
-                          value={this.state.password}
-                          onChange={this.handleChange}
-                        />
-                        <Input
-                          icon="lock"
-                          type="password"
-                          iconPosition="left"
-                          placeholder="Confirm Password"
-                          name="confirm_password"
-                          style={{ marginBottom: 15 }}
-                          value={this.state.confirm_password}
-                          onChange={this.handleChange}
-                        />
-                        <Button
-                          disabled={this.state.loading}
-                          onClick={this.HandleFormSubmit}
-                          loading={this.state.loading}
-                          secondary
-                        >
-                          Register
-                        </Button>
-                      </Card>
-                    </form>
-                  </div>
-                </Grid.Column>
-                <Grid.Column width={6} />
-              </Grid.Row>
-            </Grid>
-          </Transition>
+          <div id="register">
+            <Transition
+              animation="scale"
+              visible={this.state.visible}
+              duration={400}
+            >
+              <Grid>
+                <Grid.Row style={{ height: "89.5vh" }}>
+                  <Grid.Column width={3} />
+                  <Grid.Column width={10}>
+                    <Card className="card_comp">
+                      <Grid style={{ height: "100%" }}>
+                        <Grid.Row style={{ height: "100%" }}>
+                          <Grid.Column width={8}>
+                            <div className="carousel_compon">
+                              <h2
+                                style={{
+                                  marginBottom: "5vh",
+                                  marginTop: "10vh"
+                                }}
+                              >
+                                BrandFactory Inc.
+                              </h2>
+                              <Carousel />
+                            </div>
+                          </Grid.Column>
+                          <Grid.Column width={8}>
+                            <form className="register_form">
+                              <h2 className="header">Register Please</h2>
+                              <Grid style={{ height: "100%" }}>
+                                <Grid.Row>
+                                  <Grid.Column width={3} />
+                                  <Grid.Column width={10}>
+                                    <Input
+                                      icon="users"
+                                      type="text"
+                                      iconPosition="left"
+                                      placeholder="Enter Username"
+                                      name="username"
+                                      value={this.state.username}
+                                      onChange={this.handleChange}
+                                    />
+                                  </Grid.Column>
+                                  <Grid.Column width={3} />
+                                </Grid.Row>
+                                <Grid.Row>
+                                  <Grid.Column width={3} />
+                                  <Grid.Column width={10}>
+                                    <Input
+                                      icon="mail"
+                                      type="email"
+                                      iconPosition="left"
+                                      placeholder="Enter Email"
+                                      name="email"
+                                      value={this.state.email}
+                                      onChange={this.handleChange}
+                                    />
+                                  </Grid.Column>
+                                  <Grid.Column width={3} />
+                                </Grid.Row>
+                                <Grid.Row>
+                                  <Grid.Column width={3} />
+                                  <Grid.Column width={10}>
+                                    <Input
+                                      icon="lock"
+                                      type="password"
+                                      iconPosition="left"
+                                      placeholder="Enter Password"
+                                      name="password"
+                                      value={this.state.password}
+                                      onChange={this.handleChange}
+                                    />
+                                  </Grid.Column>
+                                  <Grid.Column width={3} />
+                                </Grid.Row>
+
+                                <Grid.Row>
+                                  <Grid.Column width={3} />
+                                  <Grid.Column width={10}>
+                                    <Input
+                                      icon="lock"
+                                      type="password"
+                                      iconPosition="left"
+                                      placeholder="Confirm Password"
+                                      name="confirm_password"
+                                      value={this.state.confirm_password}
+                                      onChange={this.handleChange}
+                                    />
+                                  </Grid.Column>
+                                  <Grid.Column width={3} />
+                                </Grid.Row>
+                                <Grid.Row>
+                                  <Grid.Column width={3} />
+                                  <Grid.Column width={10}>
+                                    <Button
+                                      style={{ width: "100%" }}
+                                      disabled={this.state.loading}
+                                      onClick={this.HandleFormSubmit}
+                                      loading={this.state.loading}
+                                      secondary
+                                      className="register_button"
+                                    >
+                                      Register
+                                    </Button>
+                                  </Grid.Column>
+
+                                  <Grid.Column width={3} />
+                                </Grid.Row>
+                              </Grid>
+                              <br />
+                            </form>
+                          </Grid.Column>
+                        </Grid.Row>
+                      </Grid>
+                    </Card>
+                  </Grid.Column>
+                  <Grid.Column width={3} />
+                </Grid.Row>
+              </Grid>
+            </Transition>
+          </div>
         </Fragment>
       );
     }

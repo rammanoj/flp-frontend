@@ -1,7 +1,8 @@
 import React, { Fragment } from "react";
 import { notifyListView } from "./../api";
 import { fetchAsynchronous } from "./controllers/fetch";
-import { Dropdown, Menu, Loader } from "semantic-ui-react";
+import { Dropdown, Loader, List } from "semantic-ui-react";
+import { Link } from "react-router-dom";
 import InfiniteScroll from "react-infinite-scroll-component";
 import { getCookie } from "./cookie";
 
@@ -23,7 +24,7 @@ class AllNotify extends React.Component {
     this.fetch(uri);
   };
 
-  componentDidUpdate(prevprops, presProps) {
+  componentDidUpdate(prevprops, prevState) {
     if (prevprops.group != this.props.group) {
       this.setState(
         {
@@ -43,7 +44,8 @@ class AllNotify extends React.Component {
     }
   }
 
-  fetch(uri) {
+  fetch = uri => {
+    console.log("came here to fetch the list notification results");
     if (this.state.paginate) {
       fetchAsynchronous(
         uri,
@@ -53,10 +55,10 @@ class AllNotify extends React.Component {
         this.callback
       );
     }
-  }
+  };
 
   callback = response => {
-    // this.setState({ loading: false });
+    console.log("came here to the callback");
     if (response.hasOwnProperty("error") && response.error === 1) {
       this.setState({ paginate: false });
     } else {
@@ -66,12 +68,14 @@ class AllNotify extends React.Component {
           emptyData: true
         });
       } else {
-        let notif = [...this.state.notifications];
-        notif.push(response.results);
+        let notif = this.state.notifications;
+        notif.push(...response.results);
         this.setState({
           loading: false,
           emptyData: false,
-          notifications: notif
+          notifications: notif,
+          page: this.state.page + 1,
+          paginate: response.next !== ""
         });
       }
     }
@@ -79,52 +83,71 @@ class AllNotify extends React.Component {
 
   render = () => {
     return (
-      <Fragment>
+      <div id="allnotify">
         {this.state.emptyData ? (
-          <Dropdown.Menu
-            style={{ width: "25vw", height: "40vh", overflow: "auto" }}
-          >
-            <Dropdown.Header>
-              <div style={{ textAlign: "center" }}>
-                <br />
-                No notifications currently!
-                <br />
-              </div>
-            </Dropdown.Header>
-          </Dropdown.Menu>
+          <Dropdown.Header>
+            <div style={{ textAlign: "center" }}>
+              <br />
+              No notifications currently!
+              <br />
+            </div>
+          </Dropdown.Header>
         ) : (
-          <Dropdown.Menu
-            id="allnotify"
-            style={{ width: "25vw", height: "40vh", overflow: "auto" }}
-          >
+          <Fragment>
             {this.state.loading ? (
-              <Dropdown.Item active={false} disabled={true}>
-                <Loader active size="mini" />
+              <Dropdown.Item
+                active={false}
+                disabled={true}
+                style={{ marginTop: 20 }}
+              >
+                <Loader active size="tiny">
+                  getting notifications
+                </Loader>
               </Dropdown.Item>
             ) : (
-              <Fragment>
+              <List>
                 <InfiniteScroll
                   dataLength={this.state.notifications.length}
-                  next={this.fetch}
+                  next={() =>
+                    this.fetch(
+                      notifyListView.replace(
+                        "<group_pk>",
+                        this.props.group.pk
+                      ) +
+                        "?page=" +
+                        this.state.page
+                    )
+                  }
                   hasMore={this.state.paginate}
-                  loader={<Loader active />}
-                  scrollableTarget="allnotify"
+                  loader={
+                    <div style={{ color: "#474b49", textAlign: "center" }}>
+                      Getting Notifs...
+                    </div>
+                  }
+                  height={350}
+                  style={{ width: 350, w: "normal" }}
                 >
                   {this.state.notifications.map((obj, index) => (
-                    <Dropdown.Item
+                    <List.Item
+                      id="all_notify_message"
                       key={index}
-                      style={{ whiteSpace: "normal" }}
-                      onClick={() => {}}
+                      as={Link}
+                      to={"/" + obj.link}
                     >
-                      {obj.text}
-                    </Dropdown.Item>
+                      <List.Icon
+                        name="bell"
+                        size="large"
+                        verticalAlign="middle"
+                      />
+                      <List.Content style={{}}>{obj.text}</List.Content>
+                    </List.Item>
                   ))}
                 </InfiniteScroll>
-              </Fragment>
+              </List>
             )}
-          </Dropdown.Menu>
+          </Fragment>
         )}
-      </Fragment>
+      </div>
     );
   };
 }

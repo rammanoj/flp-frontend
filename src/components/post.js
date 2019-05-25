@@ -26,7 +26,9 @@ import {
   Divider,
   Label,
   Header,
-  Popup
+  Popup,
+  Image,
+  Dropdown
 } from "semantic-ui-react";
 import { CommentPagination } from "./allcomments";
 import Pagination from "semantic-ui-react-button-pagination";
@@ -326,6 +328,15 @@ class BasePost extends Component {
     let { modalvisible } = this.state;
     return (
       <Fragment>
+        <Button
+          secondary
+          className="add_post_button"
+          onClick={() => this.setState({ modalvisible: true })}
+        >
+          <Icon name="add" />
+          Add new Post
+        </Button>
+
         <Transition animation="scale" duration={400} visible={modalvisible}>
           <Modal open={modalvisible} centered={false}>
             <Modal.Header>
@@ -347,7 +358,7 @@ class BasePost extends Component {
               />
             </Modal.Header>
             <Modal.Content>
-              <Form>
+              <Form id="newpost">
                 <Grid columns="equal">
                   <Grid.Row>
                     <Grid.Column />
@@ -426,9 +437,11 @@ class BasePost extends Component {
                         onChange={e => this.setState({ tag: e.target.value })}
                         onKeyPress={e => {
                           if (e.key === "Enter") {
-                            let tags = [...this.state.tags];
-                            tags.push(this.state.tag);
-                            this.setState({ tags: tags, tag: "" });
+                            if (this.state.tag !== "") {
+                              let tags = [...this.state.tags];
+                              tags.push(this.state.tag);
+                              this.setState({ tags: tags, tag: "" });
+                            }
                           }
                         }}
                         style={{ width: "100%" }}
@@ -443,6 +456,7 @@ class BasePost extends Component {
               </Form>
               <div style={{ textAlign: "center" }}>
                 <Button
+                  className="post_create_button"
                   disabled={this.state.formloading}
                   onClick={this.handlePostCreate}
                   loading={this.state.formloading}
@@ -454,203 +468,294 @@ class BasePost extends Component {
             </Modal.Content>
           </Modal>
         </Transition>
-        <Scrollbars style={{ height: "99%", overflowX: "hidden" }}>
-          {this.state.loading ? (
-            <Loader active> fetching posts</Loader>
-          ) : (
-            <Fragment>
-              <Button
-                secondary
-                style={{ width: "97%" }}
-                onClick={() => this.setState({ modalvisible: true })}
-              >
-                <Icon name="add" />
-                Add a new Post to Timeline
-              </Button>
-
-              {this.state.emptyData ? (
-                <Fragment>
-                  <div
-                    style={{
-                      marginTop: "calc(100px + 15vh)",
-                      textAlign: "center"
-                    }}
-                  >
-                    <h2>
-                      {this.state.searchvalue === "" ||
-                      this.state.pksearch === false
-                        ? "No posts in group as per given requirement"
-                        : "NO posts posted in the timeline"}
-                    </h2>
-                  </div>
-                </Fragment>
-              ) : (
-                <Fragment>
-                  {this.state.posts.map((obj, index) => (
-                    <Fragment key={index}>
-                      <Card style={{ width: "80%", marginLeft: 40 }}>
-                        <Card.Content>
-                          <Card.Header>
-                            {obj.header}{" "}
-                            <CopyToClipboard
-                              onCopy={() => alert("url copied to clipboard")}
-                              text={obj.link}
+        {this.state.loading ? (
+          <Loader active> fetching posts</Loader>
+        ) : (
+          <Fragment>
+            {this.state.emptyData ? (
+              <Fragment>
+                <div
+                  style={{
+                    paddingTop: "calc(100px + 15vh)",
+                    textAlign: "center"
+                  }}
+                >
+                  <h2>
+                    {this.state.searchvalue !== "" ||
+                    this.state.pksearch !== false
+                      ? "No posts in group as per given requirement"
+                      : "No posts posted in the timeline"}
+                  </h2>
+                </div>
+              </Fragment>
+            ) : (
+              <Fragment>
+                {this.state.posts.map((obj, index) => (
+                  <Fragment key={index}>
+                    <Card style={{ width: "80%", marginLeft: 55 }}>
+                      {obj.file !== null ? (
+                        <Fragment>
+                          {imageFormats.indexOf(
+                            obj.file
+                              .split("/")
+                              [obj.file.split("/").length - 1].split(".")[1]
+                          ) > -1 ? (
+                            <div
+                              style={{
+                                background: "#eff0f2",
+                                textAlign: "center"
+                              }}
                             >
-                              <div
+                              <img
+                                src={obj.file}
                                 style={{
-                                  display: "inline",
-                                  float: "right",
-                                  cursor: "pointer"
+                                  maxWidth: "100%"
                                 }}
-                              >
-                                <Popup
-                                  trigger={<Icon name="share" />}
-                                  content="Share"
-                                />
-                              </div>
-                            </CopyToClipboard>
-                          </Card.Header>
-                          <Card.Meta>
-                            <span className="date">
-                              {this.formatTime(obj.created_on)}
-                            </span>
-                            {obj.edit ? (
-                              <div style={{ float: "right" }}>
-                                <PostEdit
-                                  setLoader={this.props.setLoader}
-                                  post={obj}
-                                  deletePost={this.deletePost}
-                                  setMessage={this.props.setMessage}
-                                  setPost={this.setPost}
-                                />
-                              </div>
-                            ) : (
-                              ""
-                            )}
-                          </Card.Meta>
-                          {obj.posttaggeduser_set.length !== 0 ? (
+                              />
+
+                              <br />
+                            </div>
+                          ) : (
                             <Fragment>
-                              {obj.posttaggeduser_set.map((tag, index) => (
-                                <Fragment>
-                                  <b>{tag.user}</b>
-                                  {index !== obj.posttaggeduser_set.length - 1
-                                    ? ", "
-                                    : " "}
-                                </Fragment>
-                              ))}
-                              tagged in this post.
+                              <p style={{ marginLeft: 5, marginTop: 5 }}>
+                                <b>
+                                  The contents of the file can not be displayed
+                                  in the post.
+                                  <a href={obj.file} download>
+                                    You can download it here
+                                  </a>
+                                </b>
+                              </p>
                             </Fragment>
+                          )}
+                        </Fragment>
+                      ) : (
+                        ""
+                      )}
+                      {obj.file !== null ? (
+                        <div>
+                          {obj.edit ? (
+                            <div id="more">
+                              <PostEdit
+                                setLoader={this.props.setLoader}
+                                post={obj}
+                                deletePost={this.deletePost}
+                                setMessage={this.props.setMessage}
+                                setPost={this.setPost}
+                              />
+                            </div>
                           ) : (
                             ""
                           )}
-                          <br />
-                          {obj.file !== null ? (
-                            <Fragment>
-                              {imageFormats.indexOf(
-                                obj.file
-                                  .split("/")
-                                  [obj.file.split("/").length - 1].split(".")[1]
-                              ) > -1 ? (
+                        </div>
+                      ) : (
+                        ""
+                      )}
+                      <Card.Content>
+                        <table>
+                          <tbody>
+                            <tr style={{ padding: 0 }}>
+                              <td rowSpan={4} style={{ padding: 0 }}>
+                                {obj.created_by_pic !== "" ? (
+                                  <Image
+                                    style={{ height: 55, width: 55 }}
+                                    circular
+                                    src={obj.created_by_pic}
+                                  />
+                                ) : (
+                                  <Icon name="user" size="large" />
+                                )}
+                              </td>
+                            </tr>
+                            <tr style={{ padding: 0 }}>
+                              <td>
                                 <div
                                   style={{
-                                    background: "#eff0f2",
-                                    textAlign: "center"
+                                    fontSize: 15
                                   }}
                                 >
-                                  <img
-                                    src={obj.file}
-                                    alt={obj.header + " image"}
-                                    style={{
-                                      maxWidth: "100%"
-                                    }}
-                                  />
-                                  <br />
+                                  <a href="#">{obj.created_by}</a>
                                 </div>
+                              </td>
+                              <td>
+                                {obj.file === null ? (
+                                  <Fragment>
+                                    {obj.edit ? (
+                                      <div id="more">
+                                        <PostEdit
+                                          setLoader={this.props.setLoader}
+                                          post={obj}
+                                          deletePost={this.deletePost}
+                                          setMessage={this.props.setMessage}
+                                          setPost={this.setPost}
+                                        />
+                                      </div>
+                                    ) : (
+                                      ""
+                                    )}
+                                  </Fragment>
+                                ) : (
+                                  ""
+                                )}
+                              </td>
+                            </tr>
+                            <tr>
+                              <td style={{ paddingLeft: 0 }}>
+                                <Card.Meta>
+                                  <p>{this.formatTime(obj.created_on)}</p>
+                                </Card.Meta>
+                              </td>
+                            </tr>
+                            <tr>
+                              <td />
+                            </tr>
+                          </tbody>
+                        </table>
+
+                        <Card.Meta />
+
+                        {obj.posttaggeduser_set.length !== 0 ? (
+                          <Fragment>
+                            {obj.posttaggeduser_set.map((tag, index) => (
+                              <Fragment key={index}>
+                                <a href="#">
+                                  <b>{tag.user}</b>
+                                </a>
+                                {index !== obj.posttaggeduser_set.length - 1
+                                  ? ", "
+                                  : " "}
+                              </Fragment>
+                            ))}
+                            tagged in this post.
+                          </Fragment>
+                        ) : (
+                          ""
+                        )}
+                      </Card.Content>
+                      <Card.Content extra>
+                        <Card.Description>
+                          <h3>{obj.header}</h3>
+                          <p>{obj.about}</p>
+                          {obj.like > 0 ? (
+                            <Fragment>
+                              {obj.action === "like" ? (
+                                <b>
+                                  You{" "}
+                                  {obj.like - 1 > 0 ? (
+                                    <span>
+                                      and{" "}
+                                      {obj.like - 1 > 0 ? (
+                                        <span>
+                                          {obj.like - 1} other persons like
+                                          this.
+                                        </span>
+                                      ) : (
+                                        <span>1 other person like this.</span>
+                                      )}
+                                    </span>
+                                  ) : (
+                                    <span>like this</span>
+                                  )}
+                                </b>
                               ) : (
                                 <Fragment>
-                                  <p>
-                                    The contents of the file can not be
-                                    displayed in the post. You can download it
-                                    here
-                                    <a
-                                      style={{ float: "right" }}
-                                      href={obj.file}
-                                      download
-                                    >
-                                      Download
-                                    </a>
-                                  </p>
+                                  {obj.like > 1 ? (
+                                    <b>{obj.like} persons like this post.</b>
+                                  ) : (
+                                    <b>1 person like this post</b>
+                                  )}
                                 </Fragment>
                               )}
                             </Fragment>
                           ) : (
                             ""
                           )}
-                          <br />
-                          <Card.Description>{obj.about}</Card.Description>
-                        </Card.Content>
+                        </Card.Description>
+                      </Card.Content>
+                      <Card.Content extra>
+                        <Grid columns={3}>
+                          <Grid.Row style={{ textAlign: "center" }}>
+                            <Grid.Column>
+                              <PostAction post={obj} setPost={this.setPost} />
+                            </Grid.Column>
+                            <Grid.Column>
+                              <Icon
+                                name="comment outline"
+                                size="big"
+                                style={{ color: "#35b18a", cursor: "pointer" }}
+                                onClick={() =>
+                                  this.setState({
+                                    visiblecomment:
+                                      this.state.visiblecomment === obj.pk
+                                        ? false
+                                        : obj.pk
+                                  })
+                                }
+                              />
+                            </Grid.Column>
+                            <Grid.Column>
+                              <div style={{ color: "#35b18a" }}>
+                                <CopyToClipboard
+                                  onCopy={() =>
+                                    alert("url copied to clipboard")
+                                  }
+                                  text={obj.link}
+                                >
+                                  <Icon
+                                    style={{ cursor: "pointer" }}
+                                    name="share"
+                                    size="big"
+                                  />
+                                </CopyToClipboard>
+                              </div>
+                            </Grid.Column>
+                          </Grid.Row>
+                        </Grid>
+                      </Card.Content>
+
+                      <Transition
+                        duration={400}
+                        visible={this.state.visiblecomment === obj.pk}
+                        animation="drop"
+                      >
                         <Card.Content extra>
-                          <PostAction post={obj} setPost={this.setPost} />
-                          <Button
-                            icon
-                            style={{ float: "right" }}
-                            onClick={() =>
-                              this.setState({
-                                visiblecomment:
-                                  this.state.visiblecomment === obj.pk
-                                    ? false
-                                    : obj.pk
-                              })
-                            }
-                          >
-                            <Icon name="comments" />
-                          </Button>
+                          <CommentPagination
+                            post={obj}
+                            setPost={this.setPost}
+                            setMessage={this.props.setMessage}
+                          />
                         </Card.Content>
+                      </Transition>
+                    </Card>
+                  </Fragment>
+                ))}
+                <br />
+                {this.state.pagination === true ? (
+                  <div
+                    style={{
+                      marginTop: 30,
+                      marginBottom: 20,
 
-                        <Transition
-                          duration={400}
-                          visible={this.state.visiblecomment === obj.pk}
-                          animation="drop"
-                        >
-                          <Card.Content extra>
-                            <CommentPagination
-                              post={obj}
-                              setPost={this.setPost}
-                              setMessage={this.props.setMessage}
-                            />
-                          </Card.Content>
-                        </Transition>
-                      </Card>
-                    </Fragment>
-                  ))}
-                  <br />
-                  {this.state.pagination === true ? (
-                    <div
-                      style={{
-                        marginTop: 30,
-                        marginBottom: 20,
-
-                        textAlign: "center"
-                      }}
-                    >
-                      <Pagination
-                        limit={paginationCount}
-                        offset={this.state.offset}
-                        total={this.state.items}
-                        onClick={(e, props, offset) =>
-                          this.handlePageClick(offset)
-                        }
-                      />
-                    </div>
-                  ) : (
-                    ""
-                  )}
-                  <br />
-                </Fragment>
-              )}
-            </Fragment>
-          )}
-        </Scrollbars>
+                      textAlign: "center"
+                    }}
+                  >
+                    <Pagination
+                      limit={paginationCount}
+                      offset={this.state.offset}
+                      total={this.state.items}
+                      onClick={(e, props, offset) =>
+                        this.handlePageClick(offset)
+                      }
+                    />
+                  </div>
+                ) : (
+                  ""
+                )}
+                <br />
+              </Fragment>
+            )}
+          </Fragment>
+        )}
       </Fragment>
     );
   };
@@ -780,8 +885,6 @@ class PostEdit extends Component {
     for (let i in taggeduser) {
       tags.push(taggeduser[i].user);
     }
-    console.log(this.props.post.posttaggeduser_set);
-    console.log(tags);
     this.setState({
       visible: true,
       header: this.props.post.header,
@@ -831,7 +934,7 @@ class PostEdit extends Component {
               />
             </Modal.Header>
             <Modal.Content>
-              <Form>
+              <Form id="postupdate_form">
                 <Grid columns="equal">
                   <Grid.Row>
                     <Grid.Column />
@@ -931,6 +1034,7 @@ class PostEdit extends Component {
                   onClick={this.HandleFormSubmit}
                   loading={this.state.loading}
                   secondary
+                  className="postupdate_button"
                 >
                   Update
                 </Button>
@@ -962,24 +1066,32 @@ class PostEdit extends Component {
             </Modal.Actions>
           </Modal>
         </Transition>
-        <span
-          style={{
-            cursor: "pointer",
-            color: "#4286f4"
-          }}
-          onClick={this.handleUpdate}
+        <Dropdown
+          icon={
+            <span id="background">
+              <Icon name="ellipsis horizontal" id="morevert" />
+            </span>
+          }
+          direction="left"
+          onClick={() => this.setState({ icon: "user" })}
+          onClose={() => this.setState({ icon: "user outline" })}
         >
-          Update
-        </span>{" "}
-        <span
-          style={{
-            cursor: "pointer",
-            color: "#f7342a"
-          }}
-          onClick={() => this.setState({ alert: true })}
-        >
-          Delete
-        </span>
+          <Dropdown.Menu>
+            <Dropdown.Item onClick={this.handleUpdate}>
+              <div style={{ color: "#28abe2" }}>
+                <Icon name="edit outline" />
+                <b>Update</b>
+              </div>
+            </Dropdown.Item>
+            <Dropdown.Divider />
+            <Dropdown.Item onClick={() => this.setState({ alert: true })}>
+              <div style={{ color: "#e8293c" }}>
+                <Icon name="trash alternate outline" />
+                Delete
+              </div>
+            </Dropdown.Item>
+          </Dropdown.Menu>
+        </Dropdown>
       </Fragment>
     );
   };
@@ -992,13 +1104,13 @@ class PostAction extends Component {
 
   updateAction = action => {
     let post = Object.assign({}, this.props.post);
-    if (post.action === action) {
-      post[action] -= 1;
+    if (post.action === "like") {
+      post["like"] -= 1;
       post.action = "";
       action = "";
     } else {
-      post[action] += 1;
-      post.action = action;
+      post["like"] += 1;
+      post.action = "like";
     }
     let headers = {
       Authorization: "Token " + getCookie("token")[0].value,
@@ -1009,7 +1121,7 @@ class PostAction extends Component {
       "POST",
       { action: action },
       headers,
-      undefined
+      () => {}
     );
 
     this.props.setPost(post);
@@ -1017,36 +1129,23 @@ class PostAction extends Component {
 
   render = () => {
     return (
-      <Fragment>
-        <Button as="div" labelPosition="right">
-          <Button
-            icon
-            disabled={this.isUnLike()}
+      <div>
+        {this.isLike() ? (
+          <Icon
+            name="heart"
+            style={{ color: "#fc2f2f", cursor: "pointer" }}
+            size="big"
+            onClick={() => this.updateAction("")}
+          />
+        ) : (
+          <Icon
+            name="heart outline"
+            size="big"
             onClick={() => this.updateAction("like")}
-          >
-            <Icon name={this.isLike() ? "thumbs up" : "thumbs up outline"} />
-            Like
-          </Button>
-          <Label as="a" basic pointing="left">
-            {this.props.post.like}
-          </Label>
-        </Button>
-        <Button as="div" labelPosition="right">
-          <Button
-            icon
-            disabled={this.isLike()}
-            onClick={() => this.updateAction("unlike")}
-          >
-            <Icon
-              name={this.isUnLike() ? "thumbs down" : "thumbs down outline"}
-            />
-            DisLike
-          </Button>
-          <Label as="a" basic pointing="left">
-            {this.props.post.unlike}
-          </Label>
-        </Button>
-      </Fragment>
+            style={{ cursor: "pointer" }}
+          />
+        )}
+      </div>
     );
   };
 }

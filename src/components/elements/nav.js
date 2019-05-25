@@ -3,7 +3,6 @@ import { getCookie } from "./../cookie";
 import { Link } from "react-router-dom";
 import {
   Menu,
-  Segment,
   Message,
   Transition,
   Input,
@@ -12,12 +11,16 @@ import {
   TextArea,
   Button,
   Dropdown,
+  Icon,
+  Card,
   Loader
 } from "semantic-ui-react";
+import Scrollbars from "react-custom-scrollbars";
 import { red, green, notifyListView } from "./../../api";
 import InfiniteScroll from "react-infinite-scroll-component";
 import { fetchAsynchronous } from "./../controllers/fetch";
 import { AllNotify } from "../allnotify";
+import ReactNotification from "react-notifications-component";
 
 class NavBar extends Component {
   constructor(props) {
@@ -30,7 +33,8 @@ class NavBar extends Component {
       page: 1,
       paginate: false,
       loading: true,
-      emptyData: false
+      emptyData: false,
+      icon: "user outline"
     };
   }
 
@@ -41,28 +45,43 @@ class NavBar extends Component {
   render = () => {
     let { isLoggedIn, active } = this.state;
     return (
-      <Segment inverted>
-        <Menu inverted secondary style={{ height: 1 }}>
+      <div id="navbar">
+        <Menu className="navbar_compon" secondary>
           {isLoggedIn ? (
             <Fragment>
-              <Menu.Item active={true}>
-                <h5>BrandFactory Inc</h5>
-              </Menu.Item>
+              {this.props.display === true ? (
+                <Menu.Item
+                  icon="content"
+                  style={{ color: "white" }}
+                  onClick={() =>
+                    this.props.set({ displayl: !this.props.displayl })
+                  }
+                />
+              ) : (
+                ""
+              )}
 
               <Menu.Item
                 name="Home"
                 to="/home"
                 as={Link}
+                style={{ color: "white", marginLeft: 10 }}
                 onClick={() => window.location.refresh()}
                 active={active === 1}
               />
 
-              <Menu.Item position="right">
-                <Menu inverted>
-                  {Object.entries(this.props.subgroup).length !== 0 ? (
+              <Menu.Item
+                position="right"
+                style={{ border: "none", outline: "none" }}
+              >
+                <Menu className="navbar_right" secondary>
+                  {this.props.subgroup !== undefined &&
+                  Object.entries(this.props.subgroup).length !== 0 ? (
                     <Menu.Item>
                       <Input
-                        icon="search"
+                        icon={
+                          <Icon name="search" style={{ color: "#1ce0c3" }} />
+                        }
                         type="text"
                         placeholder="Search"
                         value={this.state.search}
@@ -78,47 +97,80 @@ class NavBar extends Component {
                   {this.props.hasOwnProperty("search") && this.props.search ? (
                     <Fragment>
                       <Menu.Item>
-                        <Dropdown pointing icon="bell">
-                          {/* <AllNotify group={this.props.group} /> */}
+                        <Dropdown
+                          direction="left"
+                          icon="bell"
+                          style={{ color: "white" }}
+                        >
+                          <Dropdown.Menu
+                            style={{
+                              width: 350,
+                              height: 350
+                            }}
+                          >
+                            <AllNotify group={this.props.group} />
+                          </Dropdown.Menu>
                         </Dropdown>
                       </Menu.Item>
                     </Fragment>
                   ) : (
                     ""
                   )}
-                  <Menu.Item
-                    name="Profile"
-                    as={Link}
-                    to="/profile"
-                    onClick={this.handleItemClick}
-                    active={active === 2}
-                  />
-                  <Menu.Item
-                    name="Logout"
-                    as={Link}
-                    to="/logout"
-                    onClick={this.handleItemClick}
-                    active={active === 3}
-                  />
+                  <Menu.Item>
+                    <Dropdown
+                      icon={<Icon name={this.state.icon} />}
+                      direction="left"
+                      onClick={() => this.setState({ icon: "user" })}
+                      onClose={() => this.setState({ icon: "user outline" })}
+                    >
+                      <Dropdown.Menu>
+                        <Dropdown.Item
+                          icon="cog"
+                          as={Link}
+                          to="/profile"
+                          text="Settings"
+                        />
+                        <Dropdown.Divider />
+                        <Dropdown.Item
+                          as={Link}
+                          to="/logout"
+                          icon="power"
+                          text="Logout"
+                        />
+                      </Dropdown.Menu>
+                    </Dropdown>
+                  </Menu.Item>
                 </Menu>
               </Menu.Item>
+
+              {this.props.display === true ? (
+                <Menu.Item
+                  icon="content"
+                  style={{ color: "white" }}
+                  onClick={() =>
+                    this.props.set({ displayr: !this.props.displayr })
+                  }
+                />
+              ) : (
+                ""
+              )}
             </Fragment>
           ) : (
             <Fragment>
               <Menu.Item active={true}>
-                <h4>BrandFactory</h4>
+                <h5 style={{ color: "white" }}>BrandFactory Inc</h5>
               </Menu.Item>
               <Menu.Item position="right">
-                <Menu inverted>
+                <Menu secondary>
                   {active === 2 ? (
                     <Menu.Item
                       as={Link}
+                      style={{ color: "white" }}
                       to="/login"
                       name="Login"
                       position="right"
                       link={true}
                       active={active === 1}
-                      onClick={this.handleItemClick}
                     />
                   ) : (
                     ""
@@ -129,9 +181,8 @@ class NavBar extends Component {
                       to="/signup"
                       name="Signup"
                       position="right"
-                      style={{ float: "right" }}
+                      style={{ color: "white" }}
                       active={active === 2}
-                      onClick={this.handleItemClick}
                     />
                   ) : (
                     ""
@@ -141,7 +192,7 @@ class NavBar extends Component {
             </Fragment>
           )}
         </Menu>
-      </Segment>
+      </div>
     );
   };
 }
@@ -152,10 +203,9 @@ class MessageDisplay extends Component {
     this.state = {
       message: this.props.message,
       header: "",
-      type: false,
-      timeout: false
+      type: false
     };
-    var timeout = false;
+    this.timeout = false;
   }
 
   componentDidUpdate = (prevprops, presState) => {
@@ -163,13 +213,17 @@ class MessageDisplay extends Component {
       if (this.timeout !== false) {
         clearTimeout(this.timeout);
       }
-      this.setState({
-        message: this.props.message,
-        header: this.props.header
-      });
-      this.timeout = setTimeout(
-        () => this.setState({ message: false, type: false, header: "" }),
-        7000
+      this.setState(
+        {
+          message: this.props.message,
+          header: this.props.header
+        },
+        () => {
+          this.timeout = setTimeout(
+            () => this.setState({ message: false, type: false, header: "" }),
+            6000
+          );
+        }
       );
     }
   };
@@ -193,7 +247,7 @@ class MessageDisplay extends Component {
               left: 10,
               bottom: 30,
               width: "calc(100px + 20vw)",
-              position: "absolute",
+              position: "fixed",
               color: color,
               zIndex: 1002
             }}
@@ -219,12 +273,10 @@ class CustomTextArea extends React.Component {
       <Grid>
         <Grid.Row>
           <Grid.Column width={2} />
-          <Grid.Column
-            width={12}
-            style={{ border: "1px solid #dbdde0", borderRadius: 5 }}
-          >
+          <Grid.Column width={12} id="custom_textarea">
             <div style={{ width: "100%" }}>
               <TextArea
+                id="custom_textara_comment"
                 placeholder={this.props.placeholder}
                 style={{ border: "none", resize: "none" }}
                 defaultValue={this.props.value}
@@ -240,6 +292,7 @@ class CustomTextArea extends React.Component {
               <div style={{ float: "right" }}>
                 <Button
                   secondary
+                  id="submit"
                   disabled={this.state.disabled}
                   loading={this.props.loading}
                   onClick={this.props.onSuccess}

@@ -7,7 +7,8 @@ import {
   Comment,
   Button,
   Header,
-  Form
+  Form,
+  Image
 } from "semantic-ui-react";
 import {
   commentList,
@@ -423,7 +424,18 @@ class CommentPagination extends Component {
                         {this.state.comments.map((obj, index) => (
                           <Comment key={index}>
                             <Comment.Content>
-                              <Icon name="user" circular inverted />
+                              {obj.created_by_pic !== "" ? (
+                                <span>
+                                  {" "}
+                                  <Image
+                                    src={obj.created_by_pic}
+                                    circular
+                                    size="mini"
+                                  />{" "}
+                                </span>
+                              ) : (
+                                <Icon name="user" circular inverted />
+                              )}
                               <Comment.Author as="a">{obj.user}</Comment.Author>
                               <Comment.Metadata>
                                 <div>{this.formatTime(obj.created_on)}</div>
@@ -543,7 +555,17 @@ class CommentPagination extends Component {
                               {obj.postrecomment_set.map((elem, ind) => (
                                 <Comment key={ind}>
                                   <Comment.Content>
-                                    <Icon name="user" circular inverted />
+                                    {elem.created_by_pic !== "" ? (
+                                      <span>
+                                        <Image
+                                          src={elem.created_by_pic}
+                                          circular
+                                          size="mini"
+                                        />{" "}
+                                      </span>
+                                    ) : (
+                                      <Icon name="user" circular inverted />
+                                    )}
                                     <Comment.Author as="a">
                                       {elem.user}
                                     </Comment.Author>
@@ -653,6 +675,7 @@ class CommentPagination extends Component {
               )}
               <Form reply>
                 <Form.TextArea
+                  id="comment_textarea"
                   placeholder="Comment here.."
                   value={this.state.comment}
                   onChange={e => this.setState({ comment: e.target.value })}

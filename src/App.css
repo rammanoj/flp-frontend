@@ -1,41 +1,359 @@
-.App {
+/* Login Styles */
+
+#login,
+#forgotpassword,
+#register {
+  background: #f0f4f3;
+}
+
+#login .ui.card.card_comp,
+#forgotpassword .ui.card.card_comp,
+#register .ui.card.card_comp {
+  width: 100%;
+  margin-top: 24vh;
+  border-radius: 10px;
+}
+
+#login .carousel_compon,
+#forgotpassword .carousel_compon,
+#register .carousel_compon {
+  background: linear-gradient(45deg, #80e9d9, #35b18a);
+  color: #ffffff;
+  height: 40vh;
+  overflow: hidden;
+  border-radius: 10px 0px 0px 10px;
+  padding: 10px;
+  height: 100%;
+}
+
+#login .login_form,
+#forgotpassword .forgotpassword_form,
+#register .register_form {
+  margin-top: 10vh;
+}
+
+#login .login_form .header,
+#forgotpassword,
+.forgotpassword_form .header,
+#register .register_form .header {
+  background-image: linear-gradient(180deg, #80e9d9, #35b18a);
+  background-clip: text;
+  color: transparent;
   text-align: center;
 }
 
-.App-logo {
-  animation: App-logo-spin infinite 20s linear;
-  height: 40vmin;
-  pointer-events: none;
+#login .login_form .users.icon,
+#register .register_form .users.icon {
+  color: #35b18a;
 }
 
-.App-header {
-  background-color: #282c34;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  font-size: calc(10px + 2vmin);
+#login .login_form .lock.icon,
+#register .register_form .lock.icon {
+  color: #35b18a;
+}
+
+#forgotpassword .forgotpassword_form .mail.icon,
+#register .register_form .mail.icon {
+  color: #35b18a;
+}
+
+#login .login_form .row,
+#forgotpassword .forgotpassword_form .row,
+#register .register_form .row {
+  padding-bottom: 10px !important;
+}
+
+#login .ui.left.icon.input,
+#forgotpassword .ui.left.icon.input,
+#register .ui.left.icon.input {
+  width: 100%;
+}
+
+#login .login_form input,
+#forgotpassword .forgotpassword_form input,
+#register .register_form input {
+  border: none !important;
+  outline: none !important;
+  background: #f4f8f7;
+  border-radius: 20px;
+  width: 100%;
+}
+
+#login .login_form .ui.button.login_button,
+#forgotpassword .forgotpassword_form .ui.button.forgotpassword_button,
+#register .register_form .ui.button.register_button {
+  width: 100%;
+  color: #ffffff;
+  background: #35b18a;
+  border-radius: 15px;
+}
+
+#login .login_form .ui.button.signup_button {
+  width: 100%;
+  color: #35b18a;
+  background: #f4f8f7;
+  border-radius: 15px;
+}
+
+#login .carousel_compon,
+#forgotpassword .carousel_compon,
+#register .carousel_compon {
+  text-align: center;
+}
+
+#login .dot,
+#forgotpassword .dot,
+#register .dot {
+  height: 10px;
+  width: 10px;
+  margin: 4px;
+  background-color: #ffffff;
+  border-radius: 50%;
+  display: inline-block;
+  cursor: pointer;
+}
+
+/* End of Login Styles */
+
+/* NavBar styles */
+
+#navbar {
+  width: 100vw;
+}
+
+#navbar .ui.secondary.navbar_compon.menu {
+  background: linear-gradient(45deg, #4cecd4, #35b18a);
+  box-shadow: 2px 1px 5px 1px #888888;
+  overflow-y: visible;
+  position: fixed;
+  width: 100vw;
+  z-index: 101;
+  top: 0;
+}
+#navbar .user.icon {
+  color: white;
+  height: 0px;
+  overflow: visible;
+}
+
+#navbar .menu.transition.left.visible {
+  display: block;
+  overflow: visible;
+}
+/* End of navbar styles */
+
+/* Sidebar Styles */
+
+.ui.left.visible.sidebar.sidebar_compon {
+  margin-top: 63px !important;
+  background: #f0f4f3;
+  z-index: 1 !important;
+  width: 22vw;
+}
+
+.ui.right.visible.sidebar.sidebar_compon {
+  margin-top: 63px !important;
+  background: #f0f4f3;
+  z-index: 1 !important;
+  width: 22vw;
+}
+
+/* End of sidebar styles */
+
+.item.menu_item_compon,
+#subgroups .subgroup_items {
+  background: #f0f4f3 !important;
+  padding: 5px !important;
+  cursor: pointer;
+  color: black;
+  border: none;
+}
+
+.item.menu_item_select {
+  cursor: pointer;
+  border-radius: 300px 0px 0px 300px !important;
+  color: black;
+  padding: 0px !important;
+  border: none;
+}
+
+#addgroup .ui.button,
+#addsubgroup .ui.button {
+  width: 90%;
+  background-image: linear-gradient(180deg, #80e9d9, #35b18a);
+  background-clip: text;
+  color: transparent;
+  text-align: left;
+  margin-left: -20px;
+}
+
+#addgroup .button_icon,
+#addsubgroup .button_icon {
+  border: 1px solid white;
+  border-radius: 50%;
+  padding: 5px;
+  padding-right: 2px;
+  text-align: center;
+  margin-right: 10px;
+  background: #ffffff;
+  display: inline;
+  color: #80e9d9;
+}
+
+#groupcreate input,
+#groupupdate input,
+#subgroup_create_form input,
+#newpost input,
+#postupdate_form input,
+#profile_form input,
+#password_form input {
+  border: none !important;
+  outline: none !important;
+  background: #f4f8f7;
+  border-radius: 20px;
+  width: 100%;
+}
+
+#profile_form input,
+#password_form input {
+  color: #7e7a7a !important;
+}
+
+#groupcreate .users.icon,
+#groupupdate .users.icon,
+#subgroup_create_form .users.icon,
+#profile_form .user.icon,
+#profile_form .mail.icon,
+#password_form .lock.icon {
+  color: #35b18a;
+}
+
+#groupcreate .ui.secondary.button.addnew,
+#groupupdate .ui.secondary.button.updateexist,
+#subgroup_create_form .ui.secondary.button.addnewsub,
+.ui.secondary.button.postupdate_button,
+#profile_form .ui.secondary.button,
+#password_form .ui.secondary.button {
+  color: #ffffff;
+  background: #35b18a !important;
+}
+
+.ui.secondary.button.add_post_button {
+  bottom: 50px;
+  margin-left: 25vw;
+  position: fixed;
+  border: 1px solid white;
+  border-radius: 100px;
+  background: rgb(231, 240, 239) !important;
+  color: #35b18a !important;
+  z-index: 101;
+}
+
+.ui.secondary.button.post_create_button {
+  background: #35b18a !important;
+  color: white !important;
+}
+
+.three.wide.column.header_arrange {
+  padding: 0px !important;
+}
+
+#more {
+  position: absolute;
+  top: 0;
+  right: 0;
+}
+
+#morevert {
   color: white;
 }
 
-.App-link {
-  color: #61dafb;
+#background {
+  background: black;
+  padding-left: 3px;
+  border-radius: 0px 0px 0px 10px;
+  opacity: 0.6;
 }
 
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+#custom_textarea {
+  border: none;
+  background: #f4f8f7;
+  border-radius: 25px;
 }
 
-.ui.dimmer .ui.workaround.loader:before {
-  border-color: rgba(0, 0, 0, 0.1);
+#custom_textara_comment {
+  background: #f4f8f7;
+}
+#custom_textarea #submit {
+  background: #35b18a !important;
+  color: white;
 }
 
-.ui.dimmer .ui.workaround.loader:after {
-  border-color: #767676 transparent transparent;
+#comment_textarea {
+  border-width: 0;
+  background: #f4f8f7;
+  color: #616463;
+}
+
+#notify {
+  padding: 0px !important;
+  width: "1%";
+}
+
+#notify_message {
+  padding: 5px !important;
+  width: "80%";
+  margin: 5px;
+  background: #ffffff;
+  color: #4f5251;
+  border-radius: 10px;
+}
+
+#all_notify_message {
+  padding: 5px !important;
+  margin-bottom: 8px;
+  margin-left: 0px;
+  width: 340px;
+  background: #f0f4f3;
+  cursor: pointer;
+  color: #474b49;
+  border-radius: 10px;
+  white-space: normal;
+}
+
+#team_users {
+  padding: 10px;
+  margin-left: 20px;
+}
+
+#invite_users {
+  width: 95%;
+  color: #35b18a;
+  background: #f0f4f3 !important;
+}
+
+#invite_button_icon {
+  border: 1px solid white;
+  border-radius: 50%;
+  padding: 5px;
+  padding-right: 2px;
+  text-align: center;
+  margin-right: 10px;
+  background: #ffffff;
+  display: inline;
+  color: #80e9d9;
+}
+
+#send_invite {
+  color: "#ffffff";
+  background: #80e9d9 !important;
+}
+
+#profile_card {
+  width: 100%;
+  background: #ffffff;
+  border-radius: 10px;
+  padding: 15px;
+  box-shadow: #888888 1px 1px 8px 2px;
+  border-width: 0px;
 }

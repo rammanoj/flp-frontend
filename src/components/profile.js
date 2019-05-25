@@ -8,10 +8,13 @@ import {
   Transition,
   Card,
   Input,
-  Button
+  Button,
+  Image,
+  Form,
+  Icon
 } from "semantic-ui-react";
 import { profile, passwordUpdate } from "./../api";
-import { fetchAsynchronous } from "./controllers/fetch";
+import { fetchAsynchronous, fetchFileAsynchronous } from "./controllers/fetch";
 import { Redirect } from "react-router-dom";
 
 class Profile extends Component {
@@ -21,10 +24,12 @@ class Profile extends Component {
       isLoggedIn: getCookie("token")[1],
       origial: {
         username: "",
-        email: ""
+        email: "",
+        pic: ""
       },
       username: "",
       email: "",
+      pic: "",
       old_password: "",
       password: "",
       confirm_password: "",
@@ -52,7 +57,11 @@ class Profile extends Component {
     } else {
       this.setState(
         {
-          original: { username: data.username, email: data.email },
+          original: {
+            username: data.username,
+            email: data.email,
+            pic: data.pic
+          },
           username: data.username,
           email: data.email,
           componentLoading: false
@@ -70,9 +79,10 @@ class Profile extends Component {
   componentWillUnmount = () => {
     this.setState({
       isLoggedIn: getCookie("token")[1],
-      original: { username: "", email: "" },
+      original: { username: "", email: "", pic: "" },
       username: "",
       email: "",
+      pic: "",
       old_password: "",
       password: "",
       confirm_password: "",
@@ -84,13 +94,17 @@ class Profile extends Component {
   };
 
   checkUpdated = () => {
-    let { username, email, original } = this.state;
+    let { username, email, pic, original } = this.state;
     let data = {};
-    if (username != original.username) {
+    if (username !== original.username) {
       data["username"] = username;
     }
-    if (email != original.email) {
+    if (email !== original.email) {
       data["email"] = email;
+    }
+
+    if (pic !== original.pic) {
+      data["pic"] = pic;
     }
     return data;
   };
@@ -102,6 +116,7 @@ class Profile extends Component {
     };
     let { loading } = this.state;
     let data = this.checkUpdated();
+    console.log(data);
     if (form === 0) {
       this.setState({ loading: [true, loading[1]], message: false });
       fetchAsynchronous(
@@ -172,14 +187,47 @@ class Profile extends Component {
     }
   };
 
+  handlepicUpdate = () => {
+    // set the loader
+    console.log("Came here on updation");
+    // this.setState({ componentLoading: true });
+    let data = new FormData();
+    data.append("pic", this.state.pic);
+    fetchFileAsynchronous(
+      profile + getCookie("user")[0].value + "/",
+      "PATCH",
+      data,
+      { Authorization: "Token " + getCookie("token")[0].value },
+      response => {
+        if (response.error === 1) {
+          this.setState({
+            message: response.message,
+            error: true,
+            componentLoading: false
+          });
+        } else {
+          let original = Object.assign({}, this.state.original);
+          original.pic = response.pic;
+          this.setState({
+            message: "Profile pic successfully updated",
+            error: false,
+            pic: "",
+            original: original,
+            componentLoading: false
+          });
+        }
+      }
+    );
+  };
+
   render() {
     if (!this.state.isLoggedIn) {
       return <Redirect to="/login" />;
     }
-    document.body.style = "background: #ffffff;";
+    document.body.style = "background: #f0f4f3;";
     return (
       <Fragment>
-        <NavBar active={false} />
+        <NavBar active={2} />
         <MessageDisplay
           message={this.state.message}
           header={this.state.error ? "Error" : "Success"}
@@ -191,13 +239,215 @@ class Profile extends Component {
           </Dimmer>
         ) : (
           <Fragment>
-            <div style={{ marginLeft: "calc(30px + 2vw)", marginTop: 25 }}>
-              <h1 style={{ color: "#1b1c1d", display: "inline" }}>
-                Account Settings
-              </h1>
-              <p style={{ color: "#565454" }}>Edit your profile here</p>
+            <div style={{ marginTop: "20vh" }}>
+              <Grid>
+                <Grid.Row style={{ height: "100vh" }}>
+                  <Grid.Column width={5} />
+                  <Grid.Column width={6}>
+                    <Card id="profile_card">
+                      <div
+                        style={{
+                          display: "block",
+                          margin: "0 auto",
+                          textAlign: "center",
+                          padding: 20
+                        }}
+                      >
+                        {this.state.original.pic === "" ? (
+                          <Icon
+                            name="user"
+                            size="large"
+                            style={{ color: "#99a3b2" }}
+                          />
+                        ) : (
+                          <Image
+                            src={this.state.original.pic}
+                            style={{ borderRadius: "50%" }}
+                            size="tiny"
+                          />
+                        )}
+
+                        <p
+                          style={{
+                            color: "#35b18a",
+                            marginTop: 2
+                          }}
+                        >
+                          <input
+                            style={{ display: "none" }}
+                            type="file"
+                            id="postfile"
+                            onChange={e => {
+                              let file = e.target.files[0];
+                              let type = file.type.split("/")[0];
+                              if (type === "image") {
+                                this.setState({ pic: file });
+                              } else {
+                                this.setState({
+                                  message: "Only image files are accepted",
+                                  error: true
+                                });
+                              }
+                            }}
+                          />
+                          {this.state.pic !== "" ? (
+                            ""
+                          ) : (
+                            <label
+                              htmlFor="postfile"
+                              style={{ cursor: "pointer" }}
+                            >
+                              Edit Pic{" "}
+                            </label>
+                          )}
+                        </p>
+                      </div>
+                      {this.state.pic !== "" ? (
+                        <div style={{ textAlign: "center" }}>
+                          {this.state.pic.name.length >= 20
+                            ? this.state.pic.name.substr(0, 19) + ".."
+                            : this.state.pic.name}
+                          <br />
+                          <span
+                            style={{ color: "#81adf4", cursor: "pointer" }}
+                            onClick={this.handlepicUpdate}
+                          >
+                            Update
+                          </span>{" "}
+                          <span
+                            style={{ color: "red", cursor: "pointer" }}
+                            onClick={() => this.setState({ pic: "" })}
+                          >
+                            Cancel
+                          </span>
+                        </div>
+                      ) : (
+                        ""
+                      )}
+                      <Card.Content extra>
+                        <Form id="profile_form">
+                          <Grid>
+                            <Grid.Row>
+                              <Grid.Column width={4}>username:</Grid.Column>
+                              <Grid.Column width={12}>
+                                <Input
+                                  style={{ width: "100%" }}
+                                  icon="user"
+                                  name="username"
+                                  onChange={this.handleChange}
+                                  iconPosition="left"
+                                  placeholder="Enter Username"
+                                  value={this.state.username}
+                                />
+                              </Grid.Column>
+                            </Grid.Row>
+                            <Grid.Row>
+                              <Grid.Column width={4}>email:</Grid.Column>
+                              <Grid.Column width={12}>
+                                <Input
+                                  style={{ width: "100%" }}
+                                  icon="mail"
+                                  name="email"
+                                  onChange={this.handleChange}
+                                  iconPosition="left"
+                                  placeholder="Enter email"
+                                  value={this.state.email}
+                                />
+                              </Grid.Column>
+                            </Grid.Row>
+                            <Grid.Row>
+                              <Grid.Column width={6} />
+                              <Grid.Column width={4}>
+                                <Button
+                                  disabled={this.state.loading[0]}
+                                  onClick={e => this.handleFormSubmit(e, 0)}
+                                  loading={this.state.loading[0]}
+                                  secondary
+                                >
+                                  Update
+                                </Button>
+                              </Grid.Column>
+                              <Grid.Column width={6} />
+                            </Grid.Row>
+                          </Grid>
+                        </Form>
+                      </Card.Content>
+                      <Card.Content extra>
+                        <Form id="password_form">
+                          <Grid>
+                            <Grid.Row>
+                              <Grid.Column width={4}>
+                                Current Password:
+                              </Grid.Column>
+                              <Grid.Column width={12}>
+                                <Input
+                                  style={{ width: "100%" }}
+                                  icon="lock"
+                                  iconPosition="left"
+                                  name="old_password"
+                                  type="password"
+                                  onChange={this.handleChange}
+                                  placeholder="Enter password"
+                                  value={this.state.old_password}
+                                />
+                              </Grid.Column>
+                            </Grid.Row>
+                            <Grid.Row>
+                              <Grid.Column width={4}>New Password:</Grid.Column>
+                              <Grid.Column width={12}>
+                                <Input
+                                  style={{ width: "100%" }}
+                                  icon="lock"
+                                  iconPosition="left"
+                                  name="password"
+                                  type="password"
+                                  onChange={this.handleChange}
+                                  placeholder="Enter New password"
+                                  value={this.state.password}
+                                />
+                              </Grid.Column>
+                            </Grid.Row>
+                            <Grid.Row>
+                              <Grid.Column width={4}>Confirm:</Grid.Column>
+                              <Grid.Column width={12}>
+                                <Input
+                                  style={{ width: "100%" }}
+                                  icon="lock"
+                                  type="password"
+                                  name="confirm_password"
+                                  onChange={this.handleChange}
+                                  iconPosition="left"
+                                  placeholder="Confirm your password"
+                                  value={this.state.confirm_password}
+                                />
+                              </Grid.Column>
+                            </Grid.Row>
+                            <Grid.Row>
+                              <Grid.Column width={4} />
+                              <Grid.Column width={8}>
+                                <Button
+                                  style={{ width: "100%" }}
+                                  disabled={this.state.loading[1]}
+                                  onClick={e => this.handleFormSubmit(e, 1)}
+                                  loading={this.state.loading[1]}
+                                  secondary
+                                >
+                                  Change Password
+                                </Button>
+                              </Grid.Column>
+                              <Grid.Column width={4} />
+                            </Grid.Row>
+                          </Grid>
+                        </Form>
+                      </Card.Content>
+                    </Card>
+                  </Grid.Column>
+                  <Grid.Column width={5} />
+                </Grid.Row>
+              </Grid>
             </div>
-            <Grid container style={{ marginTop: 40 }}>
+
+            {/* <Grid container style={{ marginTop: 40 }}>
               <Grid.Column width={3} />
               <Grid.Column width={4} textAlign="center">
                 <Transition
@@ -293,7 +543,7 @@ class Profile extends Component {
                 </Transition>
               </Grid.Column>
               <Grid.Column width={3} />
-            </Grid>
+            </Grid> */}
           </Fragment>
         )}
       </Fragment>

@@ -250,13 +250,15 @@ class Invite extends React.Component {
       <React.Fragment>
         <br />
         <Button
-          style={{ width: "95%" }}
-          secondary
+          id="invite_users"
           onClick={() => this.setState({ visible: true })}
         >
-          <Icon name="user plus" />
-          Invite users
+          <div id="invite_button_icon">
+            <Icon name="user plus" />
+          </div>
+          Invite new Users
         </Button>
+
         <Transition
           visible={this.state.visible}
           duration={400}
@@ -339,6 +341,7 @@ class Invite extends React.Component {
               <div style={{ textAlign: "center" }}>
                 <Button
                   secondary
+                  id="send_invite"
                   onClick={() => this.api()}
                   loading={this.state.loading}
                 >

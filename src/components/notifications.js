@@ -2,7 +2,7 @@ import React, { Fragment } from "react";
 import { getCookie } from "./cookie";
 import { notifyListView } from "./../api";
 import { fetchAsynchronous } from "./controllers/fetch";
-import { Icon, Menu, Loader } from "semantic-ui-react";
+import { Icon, Menu, Loader, List } from "semantic-ui-react";
 import { Scrollbars } from "react-custom-scrollbars";
 import { Link } from "react-router-dom";
 
@@ -74,11 +74,10 @@ export default class Notify extends React.Component {
       <React.Fragment>
         {this.state.isLoggedIn ? (
           <div style={{ marginTop: 10 }}>
-            <Icon name="bell" />{" "}
-            <h4 style={{ display: "inline", zIndex: 1000 }}>
-              Recent Notifications
-            </h4>
+            <br />
             <Scrollbars
+              autoHide
+              autoHideTimeout={1000}
               style={{
                 height: "30vh"
               }}
@@ -94,20 +93,25 @@ export default class Notify extends React.Component {
                       <br />
                     </div>
                   ) : (
-                    <Menu pointing vertical style={{ width: "99%" }}>
-                      <form>
+                    <div id="notify">
+                      <List relaxed>
                         {this.state.notifications.map((obj, index) => (
-                          <Menu.Item
+                          <List.Item
                             key={index}
                             as={Link}
                             to={"/" + obj.link}
-                            style={{ width: "99%", cursor: "pointer" }}
+                            id="notify_message"
                           >
-                            {obj.text}
-                          </Menu.Item>
+                            <List.Icon
+                              name="bell"
+                              size="large"
+                              verticalAlign="middle"
+                            />
+                            <List.Content>{obj.text}</List.Content>
+                          </List.Item>
                         ))}
-                      </form>
-                    </Menu>
+                      </List>
+                    </div>
                   )}
                 </Fragment>
               )}
