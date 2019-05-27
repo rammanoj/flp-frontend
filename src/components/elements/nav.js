@@ -11,16 +11,10 @@ import {
   TextArea,
   Button,
   Dropdown,
-  Icon,
-  Card,
-  Loader
+  Icon
 } from "semantic-ui-react";
-import Scrollbars from "react-custom-scrollbars";
-import { red, green, notifyListView } from "./../../api";
-import InfiniteScroll from "react-infinite-scroll-component";
-import { fetchAsynchronous } from "./../controllers/fetch";
+import { red, green } from "./../../api";
 import { AllNotify } from "../allnotify";
-import ReactNotification from "react-notifications-component";
 
 class NavBar extends Component {
   constructor(props) {
@@ -223,7 +217,6 @@ class MessageDisplay extends Component {
       if (this.timeout !== false) {
         clearTimeout(this.timeout);
       }
-      console.log("Notify user");
       this.setState(
         {
           update: !this.state.update,
@@ -254,14 +247,8 @@ class MessageDisplay extends Component {
           visible={this.state.trigger}
         >
           <Message
-            style={{
-              left: 10,
-              bottom: 30,
-              width: "calc(100px + 20vw)",
-              position: "fixed",
-              color: color,
-              zIndex: 1002
-            }}
+            id="message-display"
+            style={{ background: color, color: "white" }}
             onDismiss={this.handleDismiss}
             header={this.props.type === 1 ? "Error" : "Success"}
             content={this.props.message}

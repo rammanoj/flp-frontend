@@ -120,6 +120,6 @@ export const maxUploadSize = 2097152;
 
 // template colors
 
-export const green = "#10e510";
+export const green = "#1da789";
 export const blue = "";
 export const red = "#ed092f";

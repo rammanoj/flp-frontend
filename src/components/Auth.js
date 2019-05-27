@@ -16,7 +16,6 @@ import {
 } from "semantic-ui-react";
 import { contents as carousel } from "./../api";
 import "./../App.css";
-import ReactCSSTransitionGroup from "react-addons-css-transition-group";
 
 class Carousel extends Component {
   constructor(props) {
@@ -40,17 +39,10 @@ class Carousel extends Component {
     let { contents, selected } = this.state;
     return (
       <Fragment>
-        <ReactCSSTransitionGroup
-          transitionName="example"
-          transitionEnterTimeout={500}
-          transitionLeaveTimeout={300}
-        >
-          <div>
-            {" "}
-            <h3>{contents[selected].header}</h3>
-            <p>{contents[selected].message}</p>
-          </div>
-        </ReactCSSTransitionGroup>
+        <div>
+          <h3>{contents[selected].header}</h3>
+          <p>{contents[selected].message}</p>
+        </div>
 
         <br />
         <br />

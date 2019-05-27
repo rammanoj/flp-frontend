@@ -1,6 +1,5 @@
 import React, { Component, Fragment } from "react";
 import { fetchAsynchronous, fetchFileAsynchronous } from "./controllers/fetch";
-import { Scrollbars } from "react-custom-scrollbars";
 import {
   PostListView,
   PostView,
@@ -26,7 +25,6 @@ import {
   Divider,
   Label,
   Header,
-  Popup,
   Image,
   Dropdown
 } from "semantic-ui-react";
@@ -158,8 +156,8 @@ class BasePost extends Component {
 
   componentDidUpdate = (prevprops, prevState) => {
     if (
-      this.props.pksearch != prevprops.pksearch &&
-      this.props.pksearch != false
+      this.props.pksearch !== prevprops.pksearch &&
+      this.props.pksearch !== false
     ) {
       this.setState(
         {
@@ -499,6 +497,7 @@ class BasePost extends Component {
                             >
                               <img
                                 src={obj.file}
+                                alt=""
                                 style={{
                                   maxWidth: "100%"
                                 }}

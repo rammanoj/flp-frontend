@@ -44,17 +44,17 @@
 
 #login .login_form .users.icon,
 #register .register_form .users.icon {
-  color: #35b18a;
+  color: #1da789;
 }
 
 #login .login_form .lock.icon,
 #register .register_form .lock.icon {
-  color: #35b18a;
+  color: #1da789;
 }
 
 #forgotpassword .forgotpassword_form .mail.icon,
 #register .register_form .mail.icon {
-  color: #35b18a;
+  color: #1da789;
 }
 
 #login .login_form .row,
@@ -84,13 +84,13 @@
 #register .register_form .ui.button.register_button {
   width: 100%;
   color: #ffffff;
-  background: #35b18a;
+  background: #1da789;
   border-radius: 15px;
 }
 
 #login .login_form .ui.button.signup_button {
   width: 100%;
-  color: #35b18a;
+  color: #1da789;
   background: #f4f8f7;
   border-radius: 15px;
 }
@@ -122,7 +122,7 @@
 }
 
 #navbar .ui.secondary.navbar_compon.menu {
-  background: linear-gradient(45deg, #4cecd4, #35b18a);
+  background: linear-gradient(45deg, #40ceb8, #35b18a);
   box-shadow: 2px 1px 5px 1px #888888;
   overflow-y: visible;
   position: fixed;
@@ -197,7 +197,7 @@
   margin-right: 10px;
   background: #ffffff;
   display: inline;
-  color: #80e9d9;
+  color: #1da789;
 }
 
 #groupcreate input,
@@ -225,7 +225,7 @@
 #profile_form .user.icon,
 #profile_form .mail.icon,
 #password_form .lock.icon {
-  color: #35b18a;
+  color: #1da789;
 }
 
 #groupcreate .ui.secondary.button.addnew,
@@ -235,7 +235,7 @@
 #profile_form .ui.secondary.button,
 #password_form .ui.secondary.button {
   color: #ffffff;
-  background: #35b18a !important;
+  background: #1da789 !important;
 }
 
 .ui.secondary.button.add_post_button {
@@ -245,12 +245,12 @@
   border: 1px solid white;
   border-radius: 100px;
   background: rgb(231, 240, 239) !important;
-  color: #35b18a !important;
+  color: #1da789 !important;
   z-index: 101;
 }
 
 .ui.secondary.button.post_create_button {
-  background: #35b18a !important;
+  background: #1da789 !important;
   color: white !important;
 }
 
@@ -285,7 +285,7 @@
   background: #f4f8f7;
 }
 #custom_textarea #submit {
-  background: #35b18a !important;
+  background: #1da789 !important;
   color: white;
 }
 
@@ -328,7 +328,7 @@
 
 #invite_users {
   width: 95%;
-  color: #35b18a;
+  color: #1da789;
   background: #f0f4f3 !important;
 }
 
@@ -346,7 +346,7 @@
 
 #send_invite {
   color: "#ffffff";
-  background: #80e9d9 !important;
+  background: #1da789 !important;
 }
 
 #profile_card {
@@ -381,4 +381,12 @@
 .ui.buttons.semantic-ui-react-button-pagination.paginate_class {
   color: white;
   background: white;
+}
+
+#message-display {
+  left: 10px !important;
+  bottom: 30px !important;
+  width: calc(100px + 20vw) !important;
+  position: fixed !important;
+  z-index: 1002 !important;
 }

@@ -25,7 +25,7 @@ class AllNotify extends React.Component {
   };
 
   componentDidUpdate(prevprops, prevState) {
-    if (prevprops.group != this.props.group) {
+    if (prevprops.group !== this.props.group) {
       this.setState(
         {
           loading: true,

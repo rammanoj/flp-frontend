@@ -4,7 +4,6 @@ import {
   Dimmer,
   Loader,
   Divider,
-  Accordion,
   Menu,
   Icon,
   Transition,
@@ -214,7 +213,7 @@ class Home extends Component {
     let data = new FormData();
     data.append("name", this.state.groupname);
     data.append("about", this.state.groupabout);
-    if (this.state.grouppic != "") {
+    if (this.state.grouppic !== "") {
       data.append("pic", this.state.grouppic);
     }
     this.setState({
@@ -272,7 +271,7 @@ class Home extends Component {
     data.append("name", this.state.groupname);
     data.append("about", this.state.groupabout);
 
-    if (this.state.grouppic != "") {
+    if (this.state.grouppic !== "") {
       data.append("pic", this.state.grouppic);
     }
 
@@ -399,7 +398,6 @@ class Home extends Component {
   render() {
     let {
       groupSelected: group,
-      active,
       activeItem,
       visible,
       subgroup,
@@ -1114,7 +1112,7 @@ class GroupSelected extends Component {
   };
 
   render = () => {
-    let { group, active } = this.state;
+    let { group } = this.state;
 
     return (
       <Fragment>
