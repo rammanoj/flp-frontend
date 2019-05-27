@@ -2,7 +2,7 @@ import React, { Fragment } from "react";
 import { getCookie } from "./cookie";
 import { notifyListView } from "./../api";
 import { fetchAsynchronous } from "./controllers/fetch";
-import { Icon, Menu, Loader, List } from "semantic-ui-react";
+import { Loader, List } from "semantic-ui-react";
 import { Scrollbars } from "react-custom-scrollbars";
 import { Link } from "react-router-dom";
 
@@ -96,19 +96,31 @@ export default class Notify extends React.Component {
                     <div id="notify">
                       <List relaxed>
                         {this.state.notifications.map((obj, index) => (
-                          <List.Item
-                            key={index}
-                            as={Link}
-                            to={"/" + obj.link}
-                            id="notify_message"
-                          >
-                            <List.Icon
-                              name="bell"
-                              size="large"
-                              verticalAlign="middle"
-                            />
-                            <List.Content>{obj.text}</List.Content>
-                          </List.Item>
+                          <Fragment key={index}>
+                            {obj.link !== null ? (
+                              <List.Item
+                                as={Link}
+                                to={"/" + obj.link}
+                                id="notify_message"
+                              >
+                                <List.Icon
+                                  name="bell"
+                                  size="large"
+                                  verticalAlign="middle"
+                                />
+                                <List.Content>{obj.text}</List.Content>
+                              </List.Item>
+                            ) : (
+                              <List.Item id="notify_message">
+                                <List.Icon
+                                  name="bell"
+                                  size="large"
+                                  verticalAlign="middle"
+                                />
+                                <List.Content>{obj.text}</List.Content>
+                              </List.Item>
+                            )}
+                          </Fragment>
                         ))}
                       </List>
                     </div>

@@ -208,11 +208,6 @@ class Invite extends React.Component {
       team: this.props.group.pk,
       email: this.state.emails
     };
-    this.props.setMessage({
-      message: false,
-      header: "",
-      type: 0
-    });
     let headers = {
       Authorization: "Token " + getCookie("token")[0].value,
       "Content-Type": "application/json"
@@ -231,7 +226,6 @@ class Invite extends React.Component {
     if (response.hasOwnProperty("error") && response.error === 1) {
       this.props.setMessage({
         message: response.message,
-        header: "Error",
         type: 1
       });
       this.setState({ loading: false });
@@ -239,7 +233,6 @@ class Invite extends React.Component {
       this.setState({ loading: false, emails: [], email: "", visible: false });
       this.props.setMessage({
         message: "Successfully sent Invite mails",
-        header: "Success",
         type: 0
       });
     }

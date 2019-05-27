@@ -16,15 +16,21 @@ import {
 } from "semantic-ui-react";
 import { contents as carousel } from "./../api";
 import "./../App.css";
-import { CSSTransition } from "react-transition-group";
+import ReactCSSTransitionGroup from "react-addons-css-transition-group";
 
 class Carousel extends Component {
-  state = {
-    contents: carousel,
-    selected: 0,
-    visible: false,
-    select: new Array(carousel.length)
-  };
+  constructor(props) {
+    super(props);
+    this.state = {
+      contents: carousel,
+      selected: 0,
+      visible: false,
+      select: new Array(carousel.length),
+      change: false
+    };
+
+    this.change = false;
+  }
 
   componentDidMount = () => {
     this.setState({ visible: true });
@@ -34,19 +40,31 @@ class Carousel extends Component {
     let { contents, selected } = this.state;
     return (
       <Fragment>
-        <CSSTransition in={true} appear={true} timeout={2000} classNames="fade">
+        <ReactCSSTransitionGroup
+          transitionName="example"
+          transitionEnterTimeout={500}
+          transitionLeaveTimeout={300}
+        >
           <div>
+            {" "}
             <h3>{contents[selected].header}</h3>
             <p>{contents[selected].message}</p>
           </div>
-        </CSSTransition>
+        </ReactCSSTransitionGroup>
+
         <br />
         <br />
         {contents.map((obj, index) => (
           <span
             key={index}
+            style={index === selected ? { backgroundColor: "#b9f6ca" } : {}}
             onClick={() => {
-              this.setState({ selected: index, visible: false, select: false });
+              this.setState({
+                selected: index,
+                visible: false,
+                select: false
+              });
+              this.change = true;
             }}
             className="dot"
           />
@@ -65,7 +83,12 @@ class Login extends Component {
       user: "",
       password: "",
       remember_me: false,
-      message: false,
+      message: {
+        message: "",
+        trigger: false,
+        type: ""
+      },
+      update: false,
       loading: false,
       visible: false
     };
@@ -93,7 +116,6 @@ class Login extends Component {
   HandleFormSubmit = e => {
     e.preventDefault();
     this.setState({
-      message: false,
       loading: true
     });
     let data = {
@@ -113,7 +135,8 @@ class Login extends Component {
   HandleResponse = data => {
     if (data.error === 1) {
       this.setState({
-        message: data.message,
+        message: { message: data.message, type: data.error, trigger: true },
+        update: !this.state.update,
         loading: false
       });
     } else {
@@ -145,15 +168,17 @@ class Login extends Component {
     if (this.state.isLoggedIn) {
       return <Redirect to="/home" />;
     } else {
+      document.body.style.backgroundColor = "#f0f4f3";
       return (
         <Fragment>
           <div id="login">
             <NavBar active={1} />
 
             <MessageDisplay
-              message={this.state.message}
-              header="Error"
-              type={1}
+              message={this.state.message.message}
+              type={this.state.message.type}
+              trigger={this.state.message.trigger}
+              update={this.state.update}
             />
 
             <Transition
@@ -163,12 +188,12 @@ class Login extends Component {
             >
               <Grid>
                 <Grid.Row style={{ height: "89.5vh" }}>
-                  <Grid.Column width={3} />
-                  <Grid.Column width={10}>
+                  <Grid.Column computer={3} mobile={1} />
+                  <Grid.Column computer={10} mobile={14}>
                     <Card className="card_comp">
                       <Grid style={{ height: "100%" }}>
                         <Grid.Row style={{ height: "100%" }}>
-                          <Grid.Column width={8}>
+                          <Grid.Column mobile={16} tablet={8} computer={8}>
                             <div className="carousel_compon">
                               <h2
                                 style={{
@@ -181,7 +206,7 @@ class Login extends Component {
                               <Carousel />
                             </div>
                           </Grid.Column>
-                          <Grid.Column width={8}>
+                          <Grid.Column mobile={16} tablet={8} computer={8}>
                             <form className="login_form">
                               <h2 className="header">Login Please</h2>
                               <Grid style={{ height: "100%" }}>
@@ -272,7 +297,7 @@ class Login extends Component {
                       </Grid>
                     </Card>
                   </Grid.Column>
-                  <Grid.Column width={3} />
+                  <Grid.Column computer={3} mobile={1} />
                 </Grid.Row>
               </Grid>
             </Transition>
@@ -289,9 +314,13 @@ class ForgotPassword extends React.Component {
     this.state = {
       isLoggedIn: getCookie("token")[1],
       email: "",
-      message: false,
+      message: {
+        message: "",
+        trigger: false,
+        tpye: ""
+      },
+      update: false,
       loading: false,
-      error: false,
       visible: false
     };
   }
@@ -306,8 +335,7 @@ class ForgotPassword extends React.Component {
       email: "",
       message: false,
       isLoggedIn: false,
-      loading: false,
-      error: false
+      loading: false
     });
   };
 
@@ -329,9 +357,13 @@ class ForgotPassword extends React.Component {
 
   HandleResponse = data => {
     this.setState({
-      message: data.message,
-      loading: false,
-      error: data.error === 1 ? true : false
+      message: {
+        message: data.message,
+        type: data.error,
+        trigger: true
+      },
+      update: !this.state.update,
+      loading: false
     });
   };
 
@@ -345,9 +377,10 @@ class ForgotPassword extends React.Component {
       return (
         <Fragment>
           <MessageDisplay
-            message={this.state.message}
-            header={this.state.error ? "Error" : "Success"}
-            type={this.state.error ? 1 : 0}
+            message={this.state.message.message}
+            type={this.state.message.type}
+            trigger={this.state.message.trigger}
+            update={this.state.update}
           />
 
           <div id="forgotpassword">
@@ -360,12 +393,12 @@ class ForgotPassword extends React.Component {
             >
               <Grid>
                 <Grid.Row style={{ height: "89.5vh" }}>
-                  <Grid.Column width={3} />
-                  <Grid.Column width={10}>
+                  <Grid.Column mobile={1} tablet={0} computer={3} />
+                  <Grid.Column mobile={14} tablet={16} computer={10}>
                     <Card className="card_comp">
                       <Grid style={{ height: "100%" }}>
                         <Grid.Row style={{ height: "100%" }}>
-                          <Grid.Column width={8}>
+                          <Grid.Column mobile={16} tablet={8} computer={8}>
                             <div className="carousel_compon">
                               <h2
                                 style={{
@@ -378,7 +411,7 @@ class ForgotPassword extends React.Component {
                               <Carousel />
                             </div>
                           </Grid.Column>
-                          <Grid.Column width={8}>
+                          <Grid.Column mobile={16} tablet={8} computer={8}>
                             <form className="forgotpassword_form">
                               <h2 className="header">Forgot Password</h2>
                               <Grid style={{ height: "100%" }}>
@@ -441,7 +474,7 @@ class ForgotPassword extends React.Component {
                       </Grid>
                     </Card>
                   </Grid.Column>
-                  <Grid.Column width={3} />
+                  <Grid.Column mobile={1} tablet={0} computer={3} />
                 </Grid.Row>
               </Grid>
             </Transition>
@@ -461,8 +494,12 @@ class Register extends React.Component {
       password: "",
       confirm_password: "",
       email: "",
-      error: 1,
-      message: false,
+      message: {
+        message: "",
+        trigger: false,
+        type: ""
+      },
+      update: false,
       loading: false,
       visible: false
     };
@@ -483,15 +520,19 @@ class Register extends React.Component {
       password: "",
       confirm_password: "",
       email: "",
-      message: false,
-      error: 1,
+      message: {
+        message: "",
+        trigger: false,
+        type: ""
+      },
+      update: false,
       loading: false
     });
   };
 
   HandleFormSubmit = e => {
     e.preventDefault();
-    this.setState({ message: false, loading: true });
+    this.setState({ loading: true });
     let data = {
       username: this.state.username,
       password: this.state.password,
@@ -516,33 +557,33 @@ class Register extends React.Component {
     this.setState({
       loading: false
     });
-    if (data.error === 1) {
-      this.setState({
-        message: data.message,
-        error: 1
-      });
-    } else {
-      this.setState({
-        message: "User successfully registered, confirm the verification mail",
-        error: 0
-      });
-    }
+    this.setState({
+      message: {
+        message:
+          data.error === 1
+            ? data.message
+            : "User successfully registered, confirm the verification mail",
+        trigger: true,
+        type: data.error
+      },
+      update: !this.state.update
+    });
   };
 
   render = () => {
-    document.body.style = "background: #ffffff;";
     if (this.state.isLoggedIn) {
       return <Redirect to="/home" />;
     } else {
-      document.body.style = "background: #fafafa;";
+      document.body.style.backgroundColor = "#f0f4f3";
       // render the components
       return (
         <Fragment>
           <NavBar active={2} />
           <MessageDisplay
-            message={this.state.message}
-            header={this.state.error === 1 ? "Error" : "Success"}
-            type={this.state.error === 1 ? 1 : 0}
+            message={this.state.message.message}
+            type={this.state.message.type}
+            trigger={this.state.message.trigger}
+            update={this.state.update}
           />
 
           <div id="register">
@@ -553,12 +594,12 @@ class Register extends React.Component {
             >
               <Grid>
                 <Grid.Row style={{ height: "89.5vh" }}>
-                  <Grid.Column width={3} />
-                  <Grid.Column width={10}>
+                  <Grid.Column mobile={1} tablet={0} computer={3} />
+                  <Grid.Column mobile={14} tablet={16} computer={10}>
                     <Card className="card_comp">
                       <Grid style={{ height: "100%" }}>
                         <Grid.Row style={{ height: "100%" }}>
-                          <Grid.Column width={8}>
+                          <Grid.Column mobile={16} tablet={16} computer={8}>
                             <div className="carousel_compon">
                               <h2
                                 style={{
@@ -571,7 +612,7 @@ class Register extends React.Component {
                               <Carousel />
                             </div>
                           </Grid.Column>
-                          <Grid.Column width={8}>
+                          <Grid.Column mobile={16} tablet={16} computer={8}>
                             <form className="register_form">
                               <h2 className="header">Register Please</h2>
                               <Grid style={{ height: "100%" }}>
@@ -661,7 +702,7 @@ class Register extends React.Component {
                       </Grid>
                     </Card>
                   </Grid.Column>
-                  <Grid.Column width={3} />
+                  <Grid.Column mobile={1} tablet={0} computer={3} />
                 </Grid.Row>
               </Grid>
             </Transition>

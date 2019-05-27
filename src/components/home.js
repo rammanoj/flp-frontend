@@ -26,7 +26,8 @@ import {
   GroupCreateView,
   TeamAddRemoveUser,
   subGroupCreate,
-  subGroupUpdate
+  subGroupUpdate,
+  maxUploadSize
 } from "./../api";
 import { fetchAsynchronous, fetchFileAsynchronous } from "./controllers/fetch";
 import { Scrollbars } from "react-custom-scrollbars";
@@ -60,8 +61,8 @@ class Home extends Component {
       formloading: false,
       renderpost: false,
       message: {
-        message: false,
-        header: "",
+        message: "",
+        trigger: false,
         type: ""
       },
       params: params,
@@ -77,7 +78,8 @@ class Home extends Component {
       alertAction: -1,
       alertContent: "",
       modalvisible: false,
-      operation_pk: -1
+      operation_pk: -1,
+      update: false
     };
 
     this.child = React.createRef();
@@ -88,7 +90,9 @@ class Home extends Component {
   };
 
   setMessage = message => {
-    this.setState({ message: message });
+    message["trigger"] = true;
+    this.setState({ message: message, update: !this.state.update });
+    console.log("came here to set the date");
   };
 
   isempty = arg => {
@@ -214,8 +218,7 @@ class Home extends Component {
       data.append("pic", this.state.grouppic);
     }
     this.setState({
-      formloading: true,
-      message: { message: false, header: "", type: 1 }
+      formloading: true
     });
     fetchFileAsynchronous(
       GroupCreateView,
@@ -240,7 +243,8 @@ class Home extends Component {
   handleGroupAPICallback = response => {
     if (response.hasOwnProperty("error") && response.error === 1) {
       this.setState({
-        message: { message: response.message, type: 1, header: "Error" },
+        message: { message: response.message, type: 1, trigger: true },
+        update: !this.state.update,
         formloading: false
       });
     } else {
@@ -250,8 +254,9 @@ class Home extends Component {
         message: {
           message: "Successfully added the group",
           type: 0,
-          header: "Success"
+          trigger: true
         },
+        update: !this.state.update,
         formloading: false,
         visible: false,
         groups: groups,
@@ -288,8 +293,7 @@ class Home extends Component {
       });
       this.setMessage({
         message: response.message,
-        type: 1,
-        header: "Error"
+        type: 1
       });
     } else {
       this.updateGroup(response);
@@ -303,8 +307,7 @@ class Home extends Component {
       });
       this.setMessage({
         message: "Successfully Updated the group",
-        type: 0,
-        header: "Success"
+        type: 0
       });
     }
   };
@@ -363,7 +366,6 @@ class Home extends Component {
   handleAlertResponse = response => {
     this.setMessage({
       message: response.message,
-      header: response.error === 0 ? "Success" : "Error",
       type: response.error === 0 ? 0 : 1
     });
     this.setLoader(false);
@@ -416,12 +418,15 @@ class Home extends Component {
       return <Redirect to={this.state.redirect} />;
     }
 
+    document.body.style.backgroundColor = "#ffffff";
+
     return (
       <div>
         <MessageDisplay
           message={this.state.message.message}
-          header={this.state.message.header}
           type={this.state.message.type}
+          update={this.state.update}
+          trigger={this.state.message.trigger}
         />
         {this.state.loading ? (
           <div>
@@ -508,12 +513,18 @@ class Home extends Component {
                                 let file = e.target.files[0];
                                 let type = file.type.split("/")[0];
                                 if (type === "image") {
-                                  this.setState({ grouppic: file });
+                                  if (file.size > maxUploadSize) {
+                                    this.setMessage({
+                                      message: "Max Image size is 2MB",
+                                      type: 1
+                                    });
+                                  } else {
+                                    this.setState({ grouppic: file });
+                                  }
                                 } else {
-                                  this.props.setMessage({
+                                  this.setMessage({
                                     message: "Only image files are accepted",
-                                    type: 1,
-                                    header: "Error"
+                                    type: 1
                                   });
                                 }
                               }}
@@ -613,12 +624,18 @@ class Home extends Component {
                                 let file = e.target.files[0];
                                 let type = file.type.split("/")[0];
                                 if (type === "image") {
-                                  this.setState({ grouppic: file });
+                                  if (file.size > maxUploadSize) {
+                                    this.setMessage({
+                                      message: "Max Image size is 2MB",
+                                      type: 1
+                                    });
+                                  } else {
+                                    this.setState({ grouppic: file });
+                                  }
                                 } else {
-                                  this.props.setMessage({
+                                  this.setMessage({
                                     message: "Only image files are accepted",
-                                    type: 1,
-                                    header: "Error"
+                                    type: 1
                                   });
                                 }
                               }}
@@ -667,8 +684,7 @@ class Home extends Component {
                         style={{ marginLeft: 5, marginTop: 10 }}
                         onClick={() =>
                           this.setState({
-                            visible: true,
-                            message: { message: false, header: "", type: 1 }
+                            visible: true
                           })
                         }
                       >
@@ -818,8 +834,7 @@ class Home extends Component {
                       <Button
                         onClick={() =>
                           this.setState({
-                            visible: true,
-                            message: { message: false, header: "", type: 1 }
+                            visible: true
                           })
                         }
                       >
@@ -925,7 +940,6 @@ class GroupSelected extends Component {
       visible: true,
       modalvisible: false,
       formloading: false,
-      message: { message: false, header: "", type: 1 },
       alertAction: 0,
       alertMessage: "",
       alertvisible: false,
@@ -990,8 +1004,7 @@ class GroupSelected extends Component {
     };
 
     this.setState({
-      formloading: true,
-      message: { message: false, header: "", type: 1 }
+      formloading: true
     });
     fetchAsynchronous(
       subGroupCreate + this.state.operation_pk + "/",
@@ -1002,8 +1015,7 @@ class GroupSelected extends Component {
         if (response.hasOwnProperty("error") && response.error === 1) {
           this.props.setMessage({
             message: response.message,
-            type: 1,
-            header: "Error"
+            type: 1
           });
           this.setState({ formloading: false });
         } else {
@@ -1020,7 +1032,6 @@ class GroupSelected extends Component {
 
           this.props.setMessage({
             message: "Successfully created a new subgroup",
-            header: "Success",
             type: 0
           });
         }
@@ -1039,7 +1050,6 @@ class GroupSelected extends Component {
       response => {
         this.props.setMessage({
           message: response.message,
-          header: response.error === 0 ? "Success" : "Error",
           type: response.error === 0 ? 0 : 1
         });
         this.props.setLoader(false);
@@ -1065,8 +1075,7 @@ class GroupSelected extends Component {
     };
 
     this.setState({
-      formloading: true,
-      message: { message: false, header: "", type: 1 }
+      formloading: true
     });
     fetchAsynchronous(
       subGroupUpdate + this.state.operation_pk + "/",
@@ -1077,8 +1086,7 @@ class GroupSelected extends Component {
         if (response.hasOwnProperty("error") && response.error === 1) {
           this.props.setMessage({
             message: response.message,
-            type: 1,
-            header: "Error"
+            type: 1
           });
           this.setState({ formloading: false });
         } else {
@@ -1098,7 +1106,6 @@ class GroupSelected extends Component {
 
           this.props.setMessage({
             message: "Successfully updated the name of subgroup",
-            header: "Success",
             type: 0
           });
         }
@@ -1258,12 +1265,6 @@ class GroupSelected extends Component {
                                 name: obj.name,
                                 operation_pk: obj.pk
                               });
-                              let message = {
-                                message: false,
-                                header: "",
-                                type: ""
-                              };
-                              this.props.setMessage(message);
                             }}
                           >
                             <div style={{ color: "#28abe2" }}>
@@ -1304,11 +1305,6 @@ class GroupSelected extends Component {
                     formloading: false,
                     operation: 0,
                     operation_pk: this.state.group.pk
-                  });
-                  this.props.setMessage({
-                    message: false,
-                    header: "",
-                    type: 1
                   });
                 }}
               >

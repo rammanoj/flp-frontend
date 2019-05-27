@@ -5,15 +5,14 @@ import {
   Grid,
   Dimmer,
   Loader,
-  Transition,
   Card,
   Input,
   Button,
-  Image,
+  Image as Images,
   Form,
   Icon
 } from "semantic-ui-react";
-import { profile, passwordUpdate } from "./../api";
+import { profile, passwordUpdate, maxUploadSize } from "./../api";
 import { fetchAsynchronous, fetchFileAsynchronous } from "./controllers/fetch";
 import { Redirect } from "react-router-dom";
 
@@ -34,10 +33,14 @@ class Profile extends Component {
       password: "",
       confirm_password: "",
       loading: [false, false],
-      message: false,
       componentLoading: true,
       visible: false,
-      error: false
+      message: {
+        message: "",
+        trigger: false,
+        type: 0
+      },
+      update: false
     };
   }
 
@@ -86,10 +89,14 @@ class Profile extends Component {
       old_password: "",
       password: "",
       confirm_password: "",
-      message: false,
+      message: {
+        message: "",
+        trigger: false,
+        type: ""
+      },
+      update: false,
       loading: [true, true],
-      componentLoading: true,
-      error: false
+      componentLoading: true
     });
   };
 
@@ -116,7 +123,6 @@ class Profile extends Component {
     };
     let { loading } = this.state;
     let data = this.checkUpdated();
-    console.log(data);
     if (form === 0) {
       this.setState({ loading: [true, loading[1]], message: false });
       fetchAsynchronous(
@@ -128,8 +134,7 @@ class Profile extends Component {
       );
     } else if (form === 1) {
       this.setState({
-        loading: [loading[0], true],
-        message: false
+        loading: [loading[0], true]
       });
       let data = {
         password: this.state.old_password,
@@ -151,17 +156,17 @@ class Profile extends Component {
 
     if (response.error === 1) {
       this.setState({
-        message: response.message,
-        loading: [false, loading[1]],
-        error: true
+        message: { message: response.message, trigger: true, type: 1 },
+        update: !this.state.update,
+        loading: [false, loading[1]]
       });
     } else {
       this.setState({
         username: response.username,
         email: response.email,
         loading: [false, loading[1]],
-        message: response.message,
-        error: false
+        message: { message: response.message, trigger: true, type: 0 },
+        update: !this.state.update
       });
     }
   };
@@ -171,9 +176,9 @@ class Profile extends Component {
 
     if (response.error === 1) {
       this.setState({
-        message: response.message,
         loading: [loading[0], false],
-        error: true
+        message: { message: response.message, trigger: true, type: 1 },
+        update: !this.state.update
       });
     } else {
       this.setState({
@@ -181,16 +186,19 @@ class Profile extends Component {
         old_password: "",
         confirm_password: "",
         loading: [loading[0], false],
-        message: "Password Successfully updated",
-        error: false
+        message: {
+          message: "Password succesfully updated!",
+          trigger: true,
+          type: 0
+        },
+        update: !this.state.update
       });
     }
   };
 
   handlepicUpdate = () => {
     // set the loader
-    console.log("Came here on updation");
-    // this.setState({ componentLoading: true });
+    this.setState({ componentLoading: true });
     let data = new FormData();
     data.append("pic", this.state.pic);
     fetchFileAsynchronous(
@@ -201,16 +209,20 @@ class Profile extends Component {
       response => {
         if (response.error === 1) {
           this.setState({
-            message: response.message,
-            error: true,
+            message: { message: response.message, trigger: true, type: 1 },
+            update: !this.state.update,
             componentLoading: false
           });
         } else {
           let original = Object.assign({}, this.state.original);
           original.pic = response.pic;
           this.setState({
-            message: "Profile pic successfully updated",
-            error: false,
+            message: {
+              message: "Profile pic successfully updated",
+              trigger: true,
+              type: 0
+            },
+            update: !this.state.update,
             pic: "",
             original: original,
             componentLoading: false
@@ -229,9 +241,10 @@ class Profile extends Component {
       <Fragment>
         <NavBar active={2} />
         <MessageDisplay
-          message={this.state.message}
-          header={this.state.error ? "Error" : "Success"}
-          type={this.state.error ? 1 : 0}
+          message={this.state.message.message}
+          type={this.state.message.type}
+          trigger={this.state.message.trigger}
+          update={this.state.update}
         />
         {this.state.componentLoading ? (
           <Dimmer active inverted>
@@ -242,8 +255,8 @@ class Profile extends Component {
             <div style={{ marginTop: "20vh" }}>
               <Grid>
                 <Grid.Row style={{ height: "100vh" }}>
-                  <Grid.Column width={5} />
-                  <Grid.Column width={6}>
+                  <Grid.Column computer={5} tablet={3} mobile={1} />
+                  <Grid.Column computer={6} tablet={10} mobile={14}>
                     <Card id="profile_card">
                       <div
                         style={{
@@ -260,7 +273,7 @@ class Profile extends Component {
                             style={{ color: "#99a3b2" }}
                           />
                         ) : (
-                          <Image
+                          <Images
                             src={this.state.original.pic}
                             style={{ borderRadius: "50%" }}
                             size="tiny"
@@ -281,7 +294,38 @@ class Profile extends Component {
                               let file = e.target.files[0];
                               let type = file.type.split("/")[0];
                               if (type === "image") {
-                                this.setState({ pic: file });
+                                // Max allowed size is 2MB
+                                if (file.size > maxUploadSize) {
+                                  this.setState({
+                                    message: {
+                                      message: "Max Image size is 2MB",
+                                      trigger: true,
+                                      type: 1
+                                    },
+                                    update: !this.state.update
+                                  });
+                                } else {
+                                  var img = new Image();
+                                  img.src = e.target.result;
+                                  var self = this;
+                                  img.onload = function() {
+                                    if (this.height / this.width === 1) {
+                                      self.setState({ pic: file });
+                                    } else {
+                                      self.setState({
+                                        message: {
+                                          message:
+                                            "Images should have same resolutions like 360:360, 640:640 etc.",
+
+                                          trigger: true,
+                                          type: 1
+                                        },
+                                        update: !self.state.update
+                                      });
+                                    }
+                                  };
+                                  img.src = window.URL.createObjectURL(file);
+                                }
                               } else {
                                 this.setState({
                                   message: "Only image files are accepted",
@@ -442,108 +486,10 @@ class Profile extends Component {
                       </Card.Content>
                     </Card>
                   </Grid.Column>
-                  <Grid.Column width={5} />
+                  <Grid.Column computer={5} tablet={3} mobile={1} />
                 </Grid.Row>
               </Grid>
             </div>
-
-            {/* <Grid container style={{ marginTop: 40 }}>
-              <Grid.Column width={3} />
-              <Grid.Column width={4} textAlign="center">
-                <Transition
-                  animation="scale"
-                  visible={this.state.visible}
-                  duration={400}
-                >
-                  <Card style={{ width: "100%", padding: 10, marginTop: 34 }}>
-                    <Input
-                      icon="users"
-                      type="text"
-                      iconPosition="left"
-                      placeholder="Enter username"
-                      name="username"
-                      value={this.state.username}
-                      onChange={this.handleChange}
-                      style={{ marginBottom: 15, width: "100%" }}
-                    />
-                    <Input
-                      icon="mail"
-                      type="email"
-                      iconPosition="left"
-                      placeholder="Enter email"
-                      name="email"
-                      value={this.state.email}
-                      onChange={this.handleChange}
-                      style={{ marginBottom: 15, width: "100%" }}
-                    />
-                    <Button
-                      disabled={this.state.loading[0]}
-                      onClick={e => this.handleFormSubmit(e, 0)}
-                      loading={this.state.loading[0]}
-                      secondary
-                    >
-                      Update
-                    </Button>
-                  </Card>
-                </Transition>
-              </Grid.Column>
-              <Grid.Column width={2} />
-              <Grid.Column width={4} textAlign="center">
-                <Transition
-                  animation="scale"
-                  visible={this.state.visible}
-                  duration={400}
-                >
-                  <div>
-                    <h4>Update Password</h4>
-                    <Card style={{ width: "100%", padding: 10 }}>
-                      <Input
-                        icon="lock"
-                        type="password"
-                        iconPosition="left"
-                        placeholder="Current Password"
-                        name="old_password"
-                        value={this.state.old_password}
-                        onChange={this.handleChange}
-                        style={{ marginBottom: 15 }}
-                      />
-
-                      <Input
-                        icon="lock"
-                        type="password"
-                        iconPosition="left"
-                        placeholder="New Password"
-                        name="password"
-                        value={this.state.password}
-                        onChange={this.handleChange}
-                        style={{ marginBottom: 15 }}
-                      />
-
-                      <Input
-                        icon="lock"
-                        type="password"
-                        iconPosition="left"
-                        placeholder="Confirm Password"
-                        name="confirm_password"
-                        value={this.state.confirm_password}
-                        onChange={this.handleChange}
-                        style={{ marginBottom: 15 }}
-                      />
-
-                      <Button
-                        disabled={this.state.loading[1]}
-                        onClick={e => this.handleFormSubmit(e, 1)}
-                        loading={this.state.loading[1]}
-                        secondary
-                      >
-                        Change Password
-                      </Button>
-                    </Card>
-                  </div>
-                </Transition>
-              </Grid.Column>
-              <Grid.Column width={3} />
-            </Grid> */}
           </Fragment>
         )}
       </Fragment>

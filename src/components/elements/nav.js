@@ -197,30 +197,41 @@ class NavBar extends Component {
   };
 }
 
+/*
+ * Props used:
+ * 1. trigger
+ * 2. update
+ * 3. message
+ * 4. type
+ */
 class MessageDisplay extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      message: this.props.message,
-      header: "",
-      type: false
+      trigger: false,
+      update: false
     };
+    /* update: true does not imply the message is showed.
+     * update: false does not also imply the message is not showed.
+     * update value is just exchanged to to show/hide the message
+     */
     this.timeout = false;
   }
 
-  componentDidUpdate = (prevprops, presState) => {
-    if (prevprops.message !== this.props.message) {
+  componentDidUpdate = (prevProps, presState) => {
+    if (prevProps.update !== this.props.update) {
       if (this.timeout !== false) {
         clearTimeout(this.timeout);
       }
+      console.log("Notify user");
       this.setState(
         {
-          message: this.props.message,
-          header: this.props.header
+          update: !this.state.update,
+          trigger: this.props.trigger
         },
         () => {
           this.timeout = setTimeout(
-            () => this.setState({ message: false, type: false, header: "" }),
+            () => this.setState({ trigger: false }),
             6000
           );
         }
@@ -229,7 +240,7 @@ class MessageDisplay extends Component {
   };
 
   handleDismiss = () => {
-    this.setState({ message: false, header: "" });
+    this.setState({ trigger: false, message: "", type: 1 });
     clearTimeout(this.timeout);
   };
 
@@ -240,7 +251,7 @@ class MessageDisplay extends Component {
         <Transition
           animation="scale"
           duration={400}
-          visible={this.state.message !== false}
+          visible={this.state.trigger}
         >
           <Message
             style={{
@@ -252,8 +263,8 @@ class MessageDisplay extends Component {
               zIndex: 1002
             }}
             onDismiss={this.handleDismiss}
-            header={this.props.header}
-            content={this.state.message}
+            header={this.props.type === 1 ? "Error" : "Success"}
+            content={this.props.message}
           />
         </Transition>
       </Fragment>

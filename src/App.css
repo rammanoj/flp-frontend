@@ -240,7 +240,7 @@
 
 .ui.secondary.button.add_post_button {
   bottom: 50px;
-  margin-left: 25vw;
+  left: 45%;
   position: fixed;
   border: 1px solid white;
   border-radius: 100px;
@@ -356,4 +356,29 @@
   padding: 15px;
   box-shadow: #888888 1px 1px 8px 2px;
   border-width: 0px;
+}
+
+/* text slider */
+
+.example-enter {
+  opacity: 0.01;
+}
+
+.example-enter.example-enter-active {
+  opacity: 1;
+  transition: opacity 500ms ease-in;
+}
+
+.example-leave {
+  opacity: 1;
+}
+
+.example-leave.example-leave-active {
+  opacity: 0.01;
+  transition: opacity 300ms ease-in;
+}
+
+.ui.buttons.semantic-ui-react-button-pagination.paginate_class {
+  color: white;
+  background: white;
 }

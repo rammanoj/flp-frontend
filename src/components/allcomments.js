@@ -21,7 +21,7 @@ import {
 } from "./../api";
 import { fetchAsynchronous } from "./controllers/fetch";
 import { getCookie } from "./cookie";
-import Pagination from "semantic-ui-react-button-pagination";
+import { Paginate as Pagination } from "./elements/pagination";
 import { CustomTextArea } from "./elements/nav";
 
 class CommentPagination extends Component {
@@ -34,8 +34,7 @@ class CommentPagination extends Component {
       comments: [],
       page: 1,
       emptyresult: false,
-      offset: 0,
-      items: 0,
+      pages: 0,
       pk: "",
       comment: "",
       commentDelete: false,
@@ -54,6 +53,13 @@ class CommentPagination extends Component {
     this.setState({ visible: true, loading: true });
     // show the loading and fetch the api.
     this.fetch();
+  };
+
+  componentDidUpdate = (prevProps, prevState) => {
+    if (prevProps.post !== this.props.post) {
+      this.setState({ comments: [], page: 1, pages: 0 });
+      this.fetch();
+    }
   };
 
   fetch = () => {
@@ -83,12 +89,12 @@ class CommentPagination extends Component {
         if (length < response.count) {
           this.setState({
             pagination: true,
-            items: response.count
+            pages: Math.ceil(response.count / paginationCount)
           });
         } else {
           this.setState({
             pagination: false,
-            items: 0
+            pages: Math.ceil(response.count / paginationCount)
           });
         }
         this.setState({
@@ -99,7 +105,7 @@ class CommentPagination extends Component {
       } else {
         this.setState({
           comments: response.results,
-          items: response.count,
+          pages: response.count,
           loading: false,
           emptyresult: false
         });
@@ -107,11 +113,10 @@ class CommentPagination extends Component {
     }
   };
 
-  handlePageClick = offset => {
+  handlePageClick = page => {
     this.setState(
       {
-        offset: offset,
-        page: Math.ceil(offset / paginationCount) + 1,
+        page: page,
         loading: true
       },
       () => this.fetch()
@@ -153,8 +158,7 @@ class CommentPagination extends Component {
     if (response.hasOwnProperty("error") && response.error === 1) {
       this.props.setMessage({
         message: response.message,
-        type: 1,
-        header: "Error"
+        type: 1
       });
       this.setState({ recommentloading: false });
     } else {
@@ -213,8 +217,7 @@ class CommentPagination extends Component {
     if (response.hasOwnProperty("error") && response.error === 1) {
       this.props.setMessage({
         message: response.message,
-        type: 1,
-        header: "Error"
+        type: 1
       });
     } else {
       // Update the post
@@ -246,8 +249,7 @@ class CommentPagination extends Component {
         if (response.hasOwnProperty("error") && response.error === 1) {
           this.props.setMessage({
             message: response.message,
-            type: 1,
-            header: "Error"
+            type: 1
           });
           this.setState({ recommentloading: false });
         } else {
@@ -320,8 +322,7 @@ class CommentPagination extends Component {
     if (response.hasOwnProperty("error") && response.error === 1) {
       this.props.setMessage({
         message: response.message,
-        type: 1,
-        header: "Error"
+        type: 1
       });
       this.setState({ addloading: false });
     } else {
@@ -658,12 +659,10 @@ class CommentPagination extends Component {
                           }}
                         >
                           <Pagination
-                            limit={paginationCount}
-                            offset={this.state.offset}
-                            total={this.state.items}
-                            onClick={(e, props, offset) =>
-                              this.handlePageClick(offset)
-                            }
+                            page={this.state.page}
+                            total={this.state.pages}
+                            onClick={this.handlePageClick}
+                            type={"arrow"}
                           />
                         </div>
                       ) : (

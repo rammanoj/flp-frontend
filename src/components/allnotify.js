@@ -45,7 +45,6 @@ class AllNotify extends React.Component {
   }
 
   fetch = uri => {
-    console.log("came here to fetch the list notification results");
     if (this.state.paginate) {
       fetchAsynchronous(
         uri,
@@ -58,7 +57,6 @@ class AllNotify extends React.Component {
   };
 
   callback = response => {
-    console.log("came here to the callback");
     if (response.hasOwnProperty("error") && response.error === 1) {
       this.setState({ paginate: false });
     } else {
@@ -86,7 +84,7 @@ class AllNotify extends React.Component {
       <div id="allnotify">
         {this.state.emptyData ? (
           <Dropdown.Header>
-            <div style={{ textAlign: "center" }}>
+            <div style={{ textAlign: "center", color: "#474b49" }}>
               <br />
               No notifications currently!
               <br />
@@ -128,19 +126,31 @@ class AllNotify extends React.Component {
                   style={{ width: 350, w: "normal" }}
                 >
                   {this.state.notifications.map((obj, index) => (
-                    <List.Item
-                      id="all_notify_message"
-                      key={index}
-                      as={Link}
-                      to={"/" + obj.link}
-                    >
-                      <List.Icon
-                        name="bell"
-                        size="large"
-                        verticalAlign="middle"
-                      />
-                      <List.Content style={{}}>{obj.text}</List.Content>
-                    </List.Item>
+                    <Fragment key={index}>
+                      {obj.link !== null ? (
+                        <List.Item
+                          as={Link}
+                          to={"/" + obj.link}
+                          id="all_notify_message"
+                        >
+                          <List.Icon
+                            name="bell"
+                            size="large"
+                            verticalAlign="middle"
+                          />
+                          <List.Content>{obj.text}</List.Content>
+                        </List.Item>
+                      ) : (
+                        <List.Item id="all_notify_message">
+                          <List.Icon
+                            name="bell"
+                            size="large"
+                            verticalAlign="middle"
+                          />
+                          <List.Content>{obj.text}</List.Content>
+                        </List.Item>
+                      )}
+                    </Fragment>
                   ))}
                 </InfiniteScroll>
               </List>

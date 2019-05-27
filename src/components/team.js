@@ -1,9 +1,9 @@
 import React, { Fragment, Component } from "react";
 import { getCookie } from "./cookie";
 import { Loader, Icon, Image } from "semantic-ui-react";
-import Pagination from "semantic-ui-react-button-pagination";
+import { Paginate as Pagination } from "./elements/pagination";
 import Scrollbars from "react-custom-scrollbars";
-import { paginationCount, TeamUserList } from "./../api";
+import { userpaginationcount as paginationCount, TeamUserList } from "./../api";
 import { fetchAsynchronous } from "./controllers/fetch";
 
 export default class UserList extends Component {
@@ -13,20 +13,19 @@ export default class UserList extends Component {
       isLoggedin: getCookie("token")[0].value,
       loading: true,
       group: this.props.group,
+      emptyresult: true,
       page: 1,
-      emptyresult: false,
-      items: 0,
-      offset: 0,
+      pages: 0,
       users: [],
       pagination: false
     };
   }
 
-  handlePageClick = offset => {
+  handlePageClick = page => {
+    console.log(page);
     this.setState(
       {
-        offset: offset,
-        page: Math.ceil(offset / paginationCount) + 1,
+        page: page,
         loading: true
       },
       () => this.fetch()
@@ -39,8 +38,7 @@ export default class UserList extends Component {
         {
           group: this.props.group,
           page: 1,
-          offset: 0,
-          items: 0,
+          pages: 0,
           users: [],
           loading: true
         },
@@ -76,12 +74,12 @@ export default class UserList extends Component {
       if (length < response.count) {
         this.setState({
           pagination: true,
-          items: response.count
+          pages: Math.ceil(response.count / paginationCount)
         });
       } else {
         this.setState({
           pagination: false,
-          items: 0
+          pages: 0
         });
       }
       this.setState({
@@ -91,7 +89,7 @@ export default class UserList extends Component {
       });
     } else {
       this.setState({
-        items: response.count,
+        pages: response.count,
         users: response.results,
         loading: false,
         emptyresult: false
@@ -150,12 +148,10 @@ export default class UserList extends Component {
                       }}
                     >
                       <Pagination
-                        limit={paginationCount}
-                        offset={this.state.offset}
-                        total={this.state.items}
-                        onClick={(e, props, offset) =>
-                          this.handlePageClick(offset)
-                        }
+                        page={this.state.page}
+                        total={this.state.pages}
+                        onClick={this.handlePageClick}
+                        type={"arrow"}
                       />
                     </div>
                   ) : (

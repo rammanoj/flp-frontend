@@ -53,8 +53,8 @@ export const subGroupUpdate = BASE_API_URI + "subgroup/";
 
 /* Pagination Count */
 
-export const paginationCount = 80;
-export const postpaginationCount = 25;
+export const paginationCount = 25;
+export const userpaginationcount = 60;
 
 // Accepted MiME types
 export const acceptedTypes = [
@@ -115,6 +115,8 @@ export const contents = [
       "these are the contents to the header 3. these are some random carousel contents. these can be updated"
   }
 ];
+
+export const maxUploadSize = 2097152;
 
 // template colors
 

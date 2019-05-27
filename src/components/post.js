@@ -9,7 +9,7 @@ import {
   imageFormats,
   months,
   postAction,
-  postpaginationCount as paginationCount
+  paginationCount
 } from "./../api";
 import { getCookie } from "./cookie";
 import {
@@ -31,7 +31,7 @@ import {
   Dropdown
 } from "semantic-ui-react";
 import { CommentPagination } from "./allcomments";
-import Pagination from "semantic-ui-react-button-pagination";
+import { Paginate as Pagination } from "./elements/pagination";
 import { CopyToClipboard } from "react-copy-to-clipboard";
 
 class BasePost extends Component {
@@ -52,8 +52,7 @@ class BasePost extends Component {
       visiblecomment: false,
       showallcomments: false,
       page: 1,
-      offset: 0,
-      items: 0,
+      pages: 0,
       pagination: false,
       searchvalue: "",
       pksearch: false,
@@ -79,8 +78,7 @@ class BasePost extends Component {
       this.setState({
         searchvalue: searchvalue,
         page: 1,
-        items: 0,
-        offset: 0,
+        pages: 0,
         loading: true
       });
       this.getList(uri);
@@ -134,12 +132,12 @@ class BasePost extends Component {
         if (length < response.count) {
           this.setState({
             pagination: true,
-            items: response.count
+            pages: Math.ceil(response.count / paginationCount)
           });
         } else {
           this.setState({
             pagination: false,
-            items: 0
+            pages: 0
           });
         }
         this.setState({
@@ -149,7 +147,7 @@ class BasePost extends Component {
         });
       } else {
         this.setState({
-          items: response.count,
+          pages: Math.ceil(response.count / paginationCount),
           posts: response.results,
           loading: false,
           emptyData: false
@@ -168,8 +166,7 @@ class BasePost extends Component {
           group: this.props.group,
           loading: true,
           page: 1,
-          items: 0,
-          offset: 0,
+          pages: 0,
           posts: []
         },
         () =>
@@ -190,8 +187,7 @@ class BasePost extends Component {
           group: this.props.group,
           loading: true,
           page: 1,
-          items: 0,
-          offset: 0,
+          pages: 0,
           posts: []
         },
         () => this.getList(PostListView + this.state.group.pk + "/?page=1")
@@ -207,8 +203,6 @@ class BasePost extends Component {
 
   handlePostCreate = () => {
     this.setState({ formloading: true });
-    this.props.setMessage({ message: false, header: "", type: 0 });
-
     let data = new FormData();
     data.append("group", this.state.group.pk);
     data.append("header", this.state.header);
@@ -249,20 +243,17 @@ class BasePost extends Component {
       // set the snackbar
       this.props.setMessage({
         message: response.message,
-        type: 1,
-        header: "Error"
+        type: 1
       });
       this.setState({ formloading: false });
     } else {
       // add post to the list of posts.
       let posts = [...this.state.posts];
-
       posts.unshift(response);
 
       this.props.setMessage({
         message: "Successfully added post to timeline",
-        type: 0,
-        header: "Success"
+        type: 0
       });
       this.setState({
         posts: posts,
@@ -313,11 +304,10 @@ class BasePost extends Component {
     this.getList(uri);
   };
 
-  handlePageClick = offset => {
+  handlePageClick = page => {
     this.setState(
       {
-        offset: offset,
-        page: Math.ceil(offset / paginationCount) + 1,
+        page: page,
         loading: true
       },
       () => this.checkForFetch()
@@ -398,8 +388,7 @@ class BasePost extends Component {
                               this.props.setMessage({
                                 message:
                                   "Only image, pdf, zip files are accepted",
-                                type: 1,
-                                header: "Error"
+                                type: 1
                               });
                             }
                           }}
@@ -412,6 +401,8 @@ class BasePost extends Component {
                             : this.state.file.name}
                         </label>
                       </div>
+                      <br />
+                      <b>Note: Press 'Enter' after entering each username</b>
                       <br />
                       {this.state.tags.map((tag, index) => (
                         <Label style={{ marginBottom: 1 }} key={index}>
@@ -427,7 +418,7 @@ class BasePost extends Component {
                           />
                         </Label>
                       ))}
-
+                      <br />
                       <Input
                         icon="tag"
                         iconPosition="left"
@@ -644,7 +635,7 @@ class BasePost extends Component {
                                   {obj.like - 1 > 0 ? (
                                     <span>
                                       and{" "}
-                                      {obj.like - 1 > 0 ? (
+                                      {obj.like - 1 > 1 ? (
                                         <span>
                                           {obj.like - 1} other persons like
                                           this.
@@ -713,46 +704,48 @@ class BasePost extends Component {
                         </Grid>
                       </Card.Content>
 
-                      <Transition
-                        duration={400}
-                        visible={this.state.visiblecomment === obj.pk}
-                        animation="drop"
-                      >
-                        <Card.Content extra>
-                          <CommentPagination
-                            post={obj}
-                            setPost={this.setPost}
-                            setMessage={this.props.setMessage}
-                          />
-                        </Card.Content>
-                      </Transition>
+                      {this.state.visiblecomment === obj.pk ? (
+                        <Transition
+                          duration={400}
+                          visible={this.state.visiblecomment === obj.pk}
+                          animation="drop"
+                        >
+                          <Card.Content extra>
+                            <CommentPagination
+                              post={obj}
+                              setPost={this.setPost}
+                              setMessage={this.props.setMessage}
+                            />
+                          </Card.Content>
+                        </Transition>
+                      ) : (
+                        ""
+                      )}
                     </Card>
                   </Fragment>
                 ))}
                 <br />
-                {this.state.pagination === true ? (
-                  <div
-                    style={{
-                      marginTop: 30,
-                      marginBottom: 20,
-
-                      textAlign: "center"
-                    }}
-                  >
-                    <Pagination
-                      limit={paginationCount}
-                      offset={this.state.offset}
-                      total={this.state.items}
-                      onClick={(e, props, offset) =>
-                        this.handlePageClick(offset)
-                      }
-                    />
-                  </div>
-                ) : (
-                  ""
-                )}
-                <br />
               </Fragment>
+            )}
+            <br />
+            {this.state.pagination === true ? (
+              <div
+                style={{
+                  marginTop: 30,
+                  marginBottom: 20,
+
+                  textAlign: "center"
+                }}
+              >
+                <Pagination
+                  page={this.state.page}
+                  total={this.state.pages}
+                  onClick={this.handlePageClick}
+                  type={"number"}
+                />
+              </div>
+            ) : (
+              ""
             )}
           </Fragment>
         )}
@@ -861,8 +854,7 @@ class PostEdit extends Component {
       this.setState({ loading: false });
       this.props.setMessage({
         message: response.message,
-        type: 1,
-        header: "Error"
+        type: 1
       });
     } else {
       this.setState({
@@ -873,8 +865,7 @@ class PostEdit extends Component {
       this.props.setPost(response);
       this.props.setMessage({
         message: "Successfully updated the post",
-        type: 0,
-        header: "Success"
+        type: 0
       });
     }
   };
@@ -896,7 +887,6 @@ class PostEdit extends Component {
 
   handleAlertClick = () => {
     this.props.setLoader(true);
-    this.props.setMessage({ message: false, type: 1, header: "" });
     this.setState({ alert: false });
     fetchAsynchronous(
       PostView + this.props.post.pk + "/",
@@ -912,8 +902,7 @@ class PostEdit extends Component {
     this.props.deletePost(this.props.post);
     this.props.setMessage({
       message: response.message,
-      type: response.error === 1 ? 1 : 0,
-      header: response.error === 1 ? "Error" : "Success"
+      type: response.error === 1 ? 1 : 0
     });
   };
 
@@ -974,8 +963,7 @@ class PostEdit extends Component {
                               this.props.setMessage({
                                 message:
                                   "Only image, pdf, zip files are accepted",
-                                type: 1,
-                                header: "Error"
+                                type: 1
                               });
                             }
                           }}
@@ -988,6 +976,8 @@ class PostEdit extends Component {
                             : this.state.file.name}
                         </label>
                       </div>
+                      <br />
+                      <b>Note: Press 'Enter' after entering each username</b>
                       <br />
                       {this.state.tags.map((tag, index) => (
                         <Label style={{ marginBottom: 1 }} key={index}>
@@ -1003,7 +993,7 @@ class PostEdit extends Component {
                           />
                         </Label>
                       ))}
-
+                      <br />
                       <Input
                         icon="tag"
                         iconPosition="left"
