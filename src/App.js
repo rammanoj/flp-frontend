@@ -6,6 +6,7 @@ import { Profile } from "./components/profile";
 import NotFound from "./components/404";
 import InviteUser from "./components/invite";
 import Home from "./components/home";
+import Slider from "./components/slider";
 
 class App extends Component {
   render() {
@@ -26,6 +27,7 @@ class App extends Component {
           <Route exact path="/logout" component={Logout} />
           {/* Invite User */}
           <Route exact path="/team/invite/:link" component={InviteUser} />
+          <Route exact path="/slide" component={Slider} />
           {/* Home page */}
           <Route
             exact

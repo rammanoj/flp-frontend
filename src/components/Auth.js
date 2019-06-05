@@ -25,7 +25,8 @@ class Carousel extends Component {
       selected: 0,
       visible: false,
       select: new Array(carousel.length),
-      change: false
+      change: false,
+      trv: 0
     };
 
     this.change = false;
@@ -39,7 +40,13 @@ class Carousel extends Component {
     let { contents, selected } = this.state;
     return (
       <Fragment>
-        <div>
+        <div
+          id="slide"
+          style={{
+            transform: `translateX(${this.state.trv}px)`,
+            transition: "transform ease-out 0.45s"
+          }}
+        >
           <h3>{contents[selected].header}</h3>
           <p>{contents[selected].message}</p>
         </div>
@@ -54,7 +61,9 @@ class Carousel extends Component {
               this.setState({
                 selected: index,
                 visible: false,
-                select: false
+                select: false,
+                trv:
+                  this.state.trv - document.querySelector("#slide").clientWidth
               });
               this.change = true;
             }}

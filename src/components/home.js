@@ -91,7 +91,6 @@ class Home extends Component {
   setMessage = message => {
     message["trigger"] = true;
     this.setState({ message: message, update: !this.state.update });
-    console.log("came here to set the date");
   };
 
   isempty = arg => {
@@ -106,7 +105,6 @@ class Home extends Component {
   };
 
   set = obj => {
-    console.log(obj);
     this.setState(obj);
   };
 
@@ -496,6 +494,7 @@ class Home extends Component {
                           <TextArea
                             placeholder="Tell us more"
                             name="groupabout"
+                            id="group_update_textarea"
                             value={this.state.groupabout}
                             onChange={this.handleChange}
                             style={{ marginBottom: 15 }}
@@ -608,6 +607,7 @@ class Home extends Component {
                           <TextArea
                             placeholder="Tell us more"
                             name="groupabout"
+                            id="group_create_textarea"
                             value={this.state.groupabout}
                             onChange={this.handleChange}
                             style={{ marginBottom: 15 }}
@@ -729,15 +729,33 @@ class Home extends Component {
                               }
                             }}
                           >
-                            <Image
-                              src={obj.pic}
-                              style={{ height: 35, width: 35 }}
-                              avatar
-                            />
-                            <b>{obj.name}</b>
+                            {obj.pic !== null && obj.pic !== "" ? (
+                              <Fragment>
+                                <Image
+                                  src={obj.pic}
+                                  style={{ height: 35, width: 35 }}
+                                  avatar
+                                />
+                                <b>{obj.name}</b>
+                              </Fragment>
+                            ) : (
+                              <div style={{ display: "inline" }}>
+                                <Icon
+                                  name="users"
+                                  style={{
+                                    marginTop: 15,
+                                    marginLeft: 15,
+                                    marginBottom: 15,
+                                    marginRight: 5
+                                  }}
+                                />
+                                <b style={{ top: 3 }}>{obj.name}</b>
+                              </div>
+                            )}
+
                             {this.state.hover === obj.pk ? (
                               <Dropdown
-                                style={{ float: "right", marginTop: 10 }}
+                                style={{ marginLeft: 20 }}
                                 icon={
                                   <Icon
                                     name="cog"

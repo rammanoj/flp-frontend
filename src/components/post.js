@@ -5,7 +5,6 @@ import {
   PostView,
   PostCreateView,
   acceptedTypes,
-  imageFormats,
   months,
   postAction,
   paginationCount
@@ -26,8 +25,10 @@ import {
   Label,
   Header,
   Image,
-  Dropdown
+  Dropdown,
+  Table
 } from "semantic-ui-react";
+import Slider from "./slider";
 import { CommentPagination } from "./allcomments";
 import { Paginate as Pagination } from "./elements/pagination";
 import { CopyToClipboard } from "react-copy-to-clipboard";
@@ -55,9 +56,16 @@ class BasePost extends Component {
       searchvalue: "",
       pksearch: false,
       tags: [],
-      tag: ""
+      tag: "",
+      files: [],
+      status: ["-", "-", "-", "-", "-", "-", "-", "-", "-", "-"],
+      ind: -1
     };
   }
+
+  set = obj => {
+    this.setState(obj);
+  };
 
   onsearchEnter = (e, searchvalue) => {
     if (e.key === "Enter") {
@@ -201,16 +209,115 @@ class BasePost extends Component {
 
   handlePostCreate = () => {
     this.setState({ formloading: true });
+    let length = this.state.files.length;
+
     let data = new FormData();
-    data.append("group", this.state.group.pk);
     data.append("header", this.state.header);
     data.append("about", this.state.about);
-    for (let i in this.state.tags) {
-      data.append("tags[]", this.state.tags[i]);
+    data.append("group", this.state.group.pk);
+
+    if (length > 1) {
+      data.append("number", 0);
+    } else {
+      data.append("number", 2);
+      for (let i in this.state.tags) {
+        data.append("tags[]", this.state.tags[i]);
+      }
     }
-    if (this.state.file !== "") {
-      data.append("file", this.state.file);
+
+    if (length >= 1) {
+      data.append("file", this.state.files[0]);
+      let status = [...this.state.status];
+      status[this.state.ind + 1] = (
+        <span style={{ color: "#41bbf4" }}>uploading...</span>
+      );
+      this.setState({ status: status });
     }
+
+    fetchFileAsynchronous(
+      PostCreateView,
+      "POST",
+      data,
+      { Authorization: "Token " + getCookie("token")[0].value },
+      this.handlePostCreateCallback
+    );
+  };
+
+  handlePostCreateCallback = response => {
+    if (response.hasOwnProperty("error") && response.error === 1) {
+      // set the snackbar
+      this.props.setMessage({
+        message: response.message,
+        type: 1
+      });
+      let status = ["-", "-", "-", "-", "-", "-", "-", "-", "-", "-"];
+      this.setState({ formloading: false, ind: -1, status: status });
+    } else {
+      let length = this.state.files.length;
+      if (
+        length === 0 ||
+        length === 1 ||
+        this.state.ind + 1 === this.state.files.length
+      ) {
+        let posts = [...this.state.posts];
+        posts.unshift(response);
+
+        this.props.setMessage({
+          message: "Successfully added post to timeline",
+          type: 0
+        });
+        this.setState({
+          posts: posts,
+          modalvisible: false,
+          formloading: false,
+          header: "",
+          about: "",
+          files: [],
+          status: ["-", "-", "-", "-", "-", "-", "-", "-", "-", "-"],
+          ind: -1,
+          emptyData: false,
+          tags: [],
+          tag: ""
+        });
+      } else {
+        this.setState(
+          {
+            formloading: false,
+            ind: this.state.ind + 1
+          },
+          () => {
+            this.PostCreateAddFile(response.message);
+          }
+        );
+      }
+    }
+
+    // add post to the list of posts.
+  };
+
+  PostCreateAddFile = pk => {
+    let data = new FormData();
+    data.append("file", this.state.files[this.state.ind + 1]);
+    data.append("post", pk);
+    if (this.state.ind + 1 === this.state.files.length) {
+      data.append("number", 2);
+      for (let i in this.state.tags) {
+        data.append("tags[]", this.state.tags[i]);
+      }
+    } else {
+      data.append("number", 1);
+    }
+
+    let status = [...this.state.status];
+    status[this.state.ind + 1] = (
+      <span style={{ color: "#41bbf4" }}>uploading...</span>
+    );
+    if (this.state.ind > -1) {
+      status[this.state.ind] = (
+        <span style={{ color: "#42f49e" }}>Uploaded</span>
+      );
+    }
+    this.setState({ status: status });
 
     fetchFileAsynchronous(
       PostCreateView,
@@ -234,37 +341,6 @@ class BasePost extends Component {
       ", " +
       date.getFullYear()
     );
-  };
-
-  handlePostCreateCallback = response => {
-    if (response.hasOwnProperty("error") && response.error === 1) {
-      // set the snackbar
-      this.props.setMessage({
-        message: response.message,
-        type: 1
-      });
-      this.setState({ formloading: false });
-    } else {
-      // add post to the list of posts.
-      let posts = [...this.state.posts];
-      posts.unshift(response);
-
-      this.props.setMessage({
-        message: "Successfully added post to timeline",
-        type: 0
-      });
-      this.setState({
-        posts: posts,
-        modalvisible: false,
-        formloading: false,
-        header: "",
-        about: "",
-        file: "",
-        emptyData: false,
-        tags: [],
-        tag: ""
-      });
-    }
   };
 
   handleChange = e => {
@@ -337,8 +413,10 @@ class BasePost extends Component {
                     modalvisible: false,
                     header: "",
                     about: "",
-                    file: "",
+                    files: [],
+                    status: ["-", "-", "-", "-", "-", "-", "-", "-", "-", "-"],
                     tags: [],
+                    ind: -1,
                     tag: ""
                   })
                 }
@@ -347,10 +425,10 @@ class BasePost extends Component {
             </Modal.Header>
             <Modal.Content>
               <Form id="newpost">
-                <Grid columns="equal">
+                <Grid>
                   <Grid.Row>
-                    <Grid.Column />
-                    <Grid.Column textAlign="center">
+                    <Grid.Column width={4} />
+                    <Grid.Column width={8} textAlign="center">
                       <Input
                         icon="edit"
                         type="text"
@@ -364,6 +442,7 @@ class BasePost extends Component {
                       <Form.TextArea
                         placeholder="Tell us more"
                         name="about"
+                        id="post_create_textarea"
                         value={this.state.about}
                         onChange={this.handleChange}
                         style={{ marginBottom: 15 }}
@@ -381,7 +460,24 @@ class BasePost extends Component {
                               acceptedTypes.indexOf(file.type) > -1 ||
                               type === "image"
                             ) {
-                              this.setState({ file: file });
+                              if (file.size <= 26214400) {
+                                if (this.state.files.length < 8) {
+                                  let files = [...this.state.files];
+                                  files.push(file);
+                                  this.setState({ files: files });
+                                } else {
+                                  this.props.setMessage({
+                                    message:
+                                      "A post can have at a max of 8 files",
+                                    type: 1
+                                  });
+                                }
+                              } else {
+                                this.props.setMessage({
+                                  message: "Max file size is 25mb",
+                                  type: 1
+                                });
+                              }
                             } else {
                               this.props.setMessage({
                                 message:
@@ -393,11 +489,46 @@ class BasePost extends Component {
                         />
                         <label htmlFor="postfile" style={{ cursor: "pointer" }}>
                           Add image / file{" "}
-                          {this.state.file !== "" &&
-                          this.state.file.name.length >= 20
-                            ? this.state.file.name.substr(0, 19) + ".."
-                            : this.state.file.name}
                         </label>
+                        {this.state.files.length !== 0 ? (
+                          <Fragment>
+                            <Table>
+                              <Table.Header>
+                                <Table.Row>
+                                  <Table.HeaderCell>Remove</Table.HeaderCell>
+                                  <Table.HeaderCell>File</Table.HeaderCell>
+                                  <Table.HeaderCell>Status</Table.HeaderCell>
+                                </Table.Row>
+                              </Table.Header>
+                              <Table.Body>
+                                {this.state.files.map((file, index) => (
+                                  <Table.Row>
+                                    <Table.Cell>
+                                      <Icon
+                                        name="minus circle"
+                                        onClick={() => {
+                                          let files = [...this.state.files];
+                                          files.splice(index, 1);
+                                          this.setState({ files: files });
+                                        }}
+                                      />
+                                    </Table.Cell>
+                                    <Table.Cell>
+                                      {file.name.length >= 20
+                                        ? file.name.substr(0, 19) + ".."
+                                        : file.name}
+                                    </Table.Cell>
+                                    <Table.Cell textAlign="center">
+                                      {this.state.status[index]}
+                                    </Table.Cell>
+                                  </Table.Row>
+                                ))}
+                              </Table.Body>
+                            </Table>
+                          </Fragment>
+                        ) : (
+                          ""
+                        )}
                       </div>
                       <br />
                       <b>Note: Press 'Enter' after entering each username</b>
@@ -439,7 +570,7 @@ class BasePost extends Component {
                       <Divider horizontal />
                     </Grid.Column>
 
-                    <Grid.Column />
+                    <Grid.Column width={4} />
                   </Grid.Row>
                 </Grid>
               </Form>
@@ -482,47 +613,19 @@ class BasePost extends Component {
                 {this.state.posts.map((obj, index) => (
                   <Fragment key={index}>
                     <Card style={{ width: "80%", marginLeft: 55 }}>
-                      {obj.file !== null ? (
+                      {obj.postfile_set.length !== 0 ? (
                         <Fragment>
-                          {imageFormats.indexOf(
-                            obj.file
-                              .split("/")
-                              [obj.file.split("/").length - 1].split(".")[1]
-                          ) > -1 ? (
-                            <div
-                              style={{
-                                background: "#eff0f2",
-                                textAlign: "center"
-                              }}
-                            >
-                              <img
-                                src={obj.file}
-                                alt=""
-                                style={{
-                                  maxWidth: "100%"
-                                }}
-                              />
-
-                              <br />
-                            </div>
-                          ) : (
-                            <Fragment>
-                              <p style={{ marginLeft: 5, marginTop: 5 }}>
-                                <b>
-                                  The contents of the file can not be displayed
-                                  in the post.
-                                  <a href={obj.file} download>
-                                    You can download it here
-                                  </a>
-                                </b>
-                              </p>
-                            </Fragment>
-                          )}
+                          <Slider
+                            items={obj.postfile_set}
+                            post={obj}
+                            set={this.set}
+                            setMessage={this.props.setMessage}
+                          />
                         </Fragment>
                       ) : (
                         ""
                       )}
-                      {obj.file !== null ? (
+                      {obj.postfile_set.length !== 0 ? (
                         <div>
                           {obj.edit ? (
                             <div id="more">
@@ -568,7 +671,7 @@ class BasePost extends Component {
                                 </div>
                               </td>
                               <td>
-                                {obj.file === null ? (
+                                {obj.postfile_set.length === 0 ? (
                                   <Fragment>
                                     {obj.edit ? (
                                       <div id="more">
@@ -714,6 +817,7 @@ class BasePost extends Component {
                               post={obj}
                               setPost={this.setPost}
                               setMessage={this.props.setMessage}
+                              post_type={0}
                             />
                           </Card.Content>
                         </Transition>
@@ -756,23 +860,62 @@ class BasePost extends Component {
 class PostEdit extends Component {
   constructor(props) {
     super(props);
+    let status = [];
+    for (let i in this.props.post.postfile_set) {
+      status.push(
+        <span style={{ color: "#42f4c5", textAlign: "center" }}>saved!</span>
+      );
+    }
     this.state = {
       header: "",
       about: "",
-      file: false,
       visible: false,
       loading: false,
       alert: false,
       tags: [],
-      tag: ""
+      files: this.props.post.postfile_set,
+      status: status,
+      ind: -1,
+      tag: "",
+      remove_file: [],
+      add_file: []
     };
   }
 
+  componentDidUpdate = (prevProps, prevState) => {
+    if (
+      this.props.post.postfile_set !== this.state.files &&
+      this.state.visible === false
+    ) {
+      let status = [];
+      for (let i in this.props.post.postfile_set) {
+        status.push(
+          <span style={{ color: "#42f4c5", textAlign: "center" }}>saved!</span>
+        );
+      }
+      this.setState({
+        files: this.props.post.postfile_set,
+        status: status,
+        add_file: []
+      });
+    }
+  };
+
   handleModalClose = () => {
+    let status = [];
+    for (let i in this.props.post.postfile_set) {
+      status.push(
+        <span style={{ textAlign: "center", color: "#42f4c5" }}>saved!</span>
+      );
+    }
     this.setState({
       visible: false,
       loading: false,
-      file: false
+      files: [],
+      ind: -1,
+      add_file: [],
+      remove_file: [],
+      status: []
     });
   };
 
@@ -798,75 +941,128 @@ class PostEdit extends Component {
 
   HandleFormSubmit = () => {
     this.setState({ loading: true });
-    let tag = [];
+    let tag;
     if (this.state.tags.length !== this.props.posttaggeduser_set) {
       tag = this.state.tags;
     } else {
       tag = this.checkEqual(this.state.tags, this.props.posttaggeduser_set);
     }
 
-    if (this.state.file === false) {
-      let data = {
-        header: this.state.header,
-        about: this.state.about
-      };
+    let data = new FormData();
+    data.append("header", this.state.header);
+    data.append("about", this.state.about);
 
-      if (tag.length !== 0) {
-        data["tags"] = tag;
+    if (tag.length !== 0) {
+      for (let i in tag) {
+        data.append("tags[]", tag[i]);
       }
-      let headers = {
-        Authorization: "Token " + getCookie("token")[0].value,
-        "Content-Type": "application/json"
-      };
-
-      fetchAsynchronous(
-        PostView + this.props.post.pk + "/",
-        "PATCH",
-        data,
-        headers,
-        this.handlePostUpdateAPICallback
-      );
     } else {
-      let data = new FormData();
-      data.append("header", this.state.header);
-      data.append("about", this.state.about);
-      if (this.state.file !== "") {
-        data.append("file", this.state.file);
-      }
-      if (tag.length !== 0) {
-        for (let i in tag) {
-          data.append("tags[]", tag[i]);
-        }
-      }
-      fetchFileAsynchronous(
-        PostView + this.props.post.pk + "/",
-        "PATCH",
-        data,
-        { Authorization: "Token " + getCookie("token")[0].value },
-        this.handlePostUpdateAPICallback
-      );
+      data.append("tags[]", "");
     }
+    let rv = "";
+    for (let i in this.state.remove_file) {
+      rv += this.state.remove_file[i] + ",";
+    }
+    rv = rv.slice(0, rv.length - 1);
+    if (rv !== "") {
+      data.append("remove_file", rv);
+    }
+    if (this.state.add_file.length === 1) {
+      data.append("file", this.state.add_file[0]);
+      data.append("number", 0);
+      let status = [...this.state.status];
+      console.log(this.state.files.length + this.state.ind + 1);
+      status[this.state.files.length + this.state.ind + 1] = (
+        <span style={{ color: "#41bbf4" }}>uploading...</span>
+      );
+      this.setState({ status: status });
+    } else if (this.state.add_file.length > 1) {
+      data.append("number", 1);
+      let status = [...this.state.status];
+      console.log(this.state.files.length + this.state.ind + 1);
+      status[this.state.files.length + this.state.ind + 1] = (
+        <span style={{ color: "#41bbf4" }}>uploading...</span>
+      );
+      this.setState({ status: status });
+      data.append("file", this.state.add_file[0]);
+    } else {
+      data.append("number", 0);
+    }
+
+    fetchFileAsynchronous(
+      PostView + this.props.post.pk + "/",
+      "PATCH",
+      data,
+      { Authorization: "Token " + getCookie("token")[0].value },
+      this.handlePostUpdateAPICallback
+    );
   };
 
   handlePostUpdateAPICallback = response => {
     if (response.hasOwnProperty("error") && response.error === 1) {
-      this.setState({ loading: false });
       this.props.setMessage({
         message: response.message,
         type: 1
       });
+      let status = [...this.state.status];
+      status[status.indexOf("uploading..")] = "-";
+      this.setState({ status: status, loading: false });
     } else {
-      this.setState({
-        loading: false,
-        visible: false
-      });
+      let length = this.state.add_file.length;
+      if (
+        length === 0 ||
+        length === 1 ||
+        this.state.ind + 1 === this.state.add_file.length - 1
+      ) {
+        this.handleModalClose();
 
-      this.props.setPost(response);
-      this.props.setMessage({
-        message: "Successfully updated the post",
-        type: 0
-      });
+        this.props.setPost(response);
+        this.props.setMessage({
+          message: "Successfully updated the post",
+          type: 0
+        });
+      } else {
+        this.setState(
+          {
+            loading: false,
+            ind: this.state.ind + 1
+          },
+          () => this.PostUpdate(response.message)
+        );
+      }
     }
+  };
+
+  PostUpdate = pk => {
+    let data = new FormData();
+    data.append("file", this.state.add_file[this.state.ind + 1]);
+    console.log(this.state.ind);
+    console.log(this.state.add_file.length);
+    console.log(this.state.add_file[this.state.ind + 1]);
+    if (this.state.ind + 1 === this.state.add_file.length - 1) {
+      data.append("number", 2);
+    } else {
+      data.append("number", 1);
+    }
+
+    let status = [...this.state.status];
+    status[this.state.files.length + this.state.ind + 1] = (
+      <span style={{ color: "#41bbf4" }}>uploading...</span>
+    );
+    if (this.state.ind > -1) {
+      status[this.state.files.length + this.state.ind] = (
+        <span style={{ color: "#42f49e" }}>Uploaded</span>
+      );
+    }
+    this.setState({ status: status });
+
+    fetchFileAsynchronous(
+      PostView + pk + "/",
+      "PATCH",
+      data,
+      { Authorization: "Token " + getCookie("token")[0].value },
+      this.handlePostUpdateAPICallback
+    );
   };
 
   handleUpdate = () => {
@@ -957,7 +1153,37 @@ class PostEdit extends Component {
                               acceptedTypes.indexOf(file.type) > -1 ||
                               type === "image"
                             ) {
-                              this.setState({ file: file });
+                              if (file.size <= 26214400) {
+                                if (
+                                  this.state.files.length +
+                                    this.state.add_file.length <
+                                  8
+                                ) {
+                                  let files = [...this.state.add_file];
+                                  files.push(file);
+                                  let status = [...this.state.status];
+                                  status.push(
+                                    <span style={{ textAlign: "center" }}>
+                                      -
+                                    </span>
+                                  );
+                                  this.setState({
+                                    add_file: files,
+                                    status: status
+                                  });
+                                } else {
+                                  this.props.setMessage({
+                                    message:
+                                      "A post can have at a max of 8 files",
+                                    type: 1
+                                  });
+                                }
+                              } else {
+                                this.props.setMessage({
+                                  message: "Max file size is 25mb",
+                                  type: 1
+                                });
+                              }
                             } else {
                               this.props.setMessage({
                                 message:
@@ -968,12 +1194,97 @@ class PostEdit extends Component {
                           }}
                         />
                         <label htmlFor="postfile" style={{ cursor: "pointer" }}>
-                          Update image / file{" "}
-                          {this.state.file != "" &&
-                          this.state.file.name.length >= 20
-                            ? this.state.file.name.substr(0, 19) + ".."
-                            : this.state.file.name}
+                          Add image / file{" "}
                         </label>
+
+                        {this.state.add_file.length !== 0 ||
+                        this.state.files.length !== 0 ? (
+                          <Fragment>
+                            <Table>
+                              <Table.Header>
+                                <Table.Row>
+                                  <Table.HeaderCell>Remove</Table.HeaderCell>
+                                  <Table.HeaderCell>File</Table.HeaderCell>
+                                  <Table.HeaderCell>Status</Table.HeaderCell>
+                                </Table.Row>
+                              </Table.Header>
+                              <Table.Body>
+                                {this.state.files.map((file, index) => (
+                                  <Table.Row key={index}>
+                                    <Table.Cell>
+                                      <Icon
+                                        name="minus circle"
+                                        onClick={() => {
+                                          let files = [...this.state.files];
+                                          files.splice(index, 1);
+                                          let remove_file = [
+                                            ...this.state.remove_file
+                                          ];
+                                          let status = [...this.state.status];
+                                          status.splice(index, 1);
+                                          remove_file.push(file.pk);
+                                          this.setState({
+                                            files: files,
+                                            remove_file: remove_file,
+                                            status: status
+                                          });
+                                        }}
+                                      />
+                                    </Table.Cell>
+                                    <Table.Cell>
+                                      {file.name.split("/")[1].length >= 20
+                                        ? file.name
+                                            .split("/")[1]
+                                            .substr(0, 19) + ".."
+                                        : file.name.split("/")[1]}
+                                    </Table.Cell>
+                                    <Table.Cell textAlign="center">
+                                      {this.state.status[index]}
+                                    </Table.Cell>
+                                  </Table.Row>
+                                ))}
+                                {this.state.add_file.map((file, index) => (
+                                  <Table.Row key={index}>
+                                    <Table.Cell>
+                                      <Icon
+                                        name="minus circle"
+                                        onClick={() => {
+                                          let files = [...this.state.add_file];
+                                          files.splice(index, 1);
+                                          let status = [...this.state.status];
+                                          status.splice(
+                                            this.state.files.length +
+                                              this.state.add_file.length -
+                                              1,
+                                            1
+                                          );
+                                          this.setState({
+                                            add_file: files,
+                                            status: status
+                                          });
+                                        }}
+                                      />
+                                    </Table.Cell>
+                                    <Table.Cell>
+                                      {file.name.length >= 20
+                                        ? file.name.substr(0, 19) + ".."
+                                        : file.name}
+                                    </Table.Cell>
+                                    <Table.Cell textAlign="center">
+                                      {
+                                        this.state.status[
+                                          this.state.files.length + index
+                                        ]
+                                      }
+                                    </Table.Cell>
+                                  </Table.Row>
+                                ))}
+                              </Table.Body>
+                            </Table>
+                          </Fragment>
+                        ) : (
+                          ""
+                        )}
                       </div>
                       <br />
                       <b>Note: Press 'Enter' after entering each username</b>

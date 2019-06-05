@@ -64,7 +64,12 @@ class CommentPagination extends Component {
 
   fetch = () => {
     fetchAsynchronous(
-      commentList + this.props.post.pk + "/?page=" + this.state.page,
+      commentList +
+        this.props.post_type +
+        "/" +
+        this.props.post.pk +
+        "/?page=" +
+        this.state.page,
       "GET",
       undefined,
       { Authorization: "Token " + getCookie("token")[0].value },
@@ -310,7 +315,7 @@ class CommentPagination extends Component {
     };
     let data = { comment: this.state.comment };
     fetchAsynchronous(
-      commentCreate + this.props.post.pk + "/",
+      commentCreate + this.props.post_type + "/" + this.props.post.pk + "/",
       "POST",
       data,
       headers,
