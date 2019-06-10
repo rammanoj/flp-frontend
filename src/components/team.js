@@ -101,9 +101,8 @@ export default class UserList extends Component {
     return (
       <Fragment>
         <br />
-        <div style={{ textAlign: "center" }}>
-          <p style={{ color: "#5e6160" }}>Team Members</p>
-        </div>
+
+        <p style={{ color: "#5e6160", marginLeft: "2vw" }}>Team Members</p>
         <Scrollbars style={{ height: "30vh" }}>
           {this.state.loading ? (
             <Loader active>getting users..</Loader>

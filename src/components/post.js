@@ -427,8 +427,13 @@ class BasePost extends Component {
               <Form id="newpost">
                 <Grid>
                   <Grid.Row>
-                    <Grid.Column width={4} />
-                    <Grid.Column width={8} textAlign="center">
+                    <Grid.Column computer={5} mobile={1} tablet={3} />
+                    <Grid.Column
+                      computer={6}
+                      mobile={14}
+                      tablet={10}
+                      textAlign="center"
+                    >
                       <Input
                         icon="edit"
                         type="text"
@@ -570,7 +575,7 @@ class BasePost extends Component {
                       <Divider horizontal />
                     </Grid.Column>
 
-                    <Grid.Column width={4} />
+                    <Grid.Column computer={5} mobile={1} tablet={3} />
                   </Grid.Row>
                 </Grid>
               </Form>
@@ -612,7 +617,7 @@ class BasePost extends Component {
               <Fragment>
                 {this.state.posts.map((obj, index) => (
                   <Fragment key={index}>
-                    <Card style={{ width: "80%", marginLeft: 55 }}>
+                    <Card style={{ width: "86%", marginLeft: "6%" }}>
                       {obj.postfile_set.length !== 0 ? (
                         <Fragment>
                           <Slider
@@ -1119,10 +1124,15 @@ class PostEdit extends Component {
             </Modal.Header>
             <Modal.Content>
               <Form id="postupdate_form">
-                <Grid columns="equal">
+                <Grid>
                   <Grid.Row>
-                    <Grid.Column />
-                    <Grid.Column textAlign="center">
+                    <Grid.Column computer={5} mobile={1} tablet={3} />
+                    <Grid.Column
+                      textAlign="center"
+                      computer={6}
+                      mobile={14}
+                      tablet={10}
+                    >
                       <Input
                         icon="edit"
                         type="text"
@@ -1324,7 +1334,7 @@ class PostEdit extends Component {
                       <Divider horizontal />
                     </Grid.Column>
 
-                    <Grid.Column />
+                    <Grid.Column computer={5} mobile={1} tablet={3} />
                   </Grid.Row>
                 </Grid>
               </Form>

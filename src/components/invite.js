@@ -274,8 +274,8 @@ class Invite extends React.Component {
             <Modal.Content>
               <Grid style={{ width: "100%" }}>
                 <Grid.Row>
-                  <Grid.Column width={4} />
-                  <Grid.Column width={8}>
+                  <Grid.Column computer={5} mobile={1} tablet={3} />
+                  <Grid.Column computer={6} mobile={14} tablet={10}>
                     <br />
                     {this.state.emails.map((email, index) => (
                       <Label style={{ marginBottom: 1 }} key={index}>
@@ -313,7 +313,7 @@ class Invite extends React.Component {
                       style={{ width: "100%" }}
                     />
                   </Grid.Column>
-                  <Grid.Column width={4} />
+                  <Grid.Column computer={5} mobile={1} tablet={3} />
                 </Grid.Row>
               </Grid>
               <br />

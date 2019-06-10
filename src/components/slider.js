@@ -25,8 +25,6 @@ export default class Slider extends React.Component {
   }
 
   getType = ind => {
-    console.log(this.props.items);
-    console.log(ind);
     let obj = this.props.items[ind];
     if (
       imageFormats.indexOf(

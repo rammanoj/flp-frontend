@@ -17,7 +17,7 @@ import {
   Image,
   Dropdown
 } from "semantic-ui-react";
-import { Redirect } from "react-router-dom";
+import { Redirect, Link } from "react-router-dom";
 import { getCookie } from "./cookie";
 import { NavBar, MessageDisplay } from "./elements/nav";
 import {
@@ -71,14 +71,16 @@ class Home extends Component {
       change: false,
       redirect: false,
       hover: false,
-      displayl: window.innerWidth < 800 ? true : false,
-      displayr: window.innerWidth < 800 ? true : false,
+      displayl: false,
+      displayr: false,
       alertvisible: false,
       alertAction: -1,
       alertContent: "",
       modalvisible: false,
       operation_pk: -1,
-      update: false
+      update: false,
+      visiblenav: false,
+      checkmark_width: window.innerWidth > 800
     };
 
     this.child = React.createRef();
@@ -139,6 +141,10 @@ class Home extends Component {
         }
       }
     }
+
+    window.addEventListener("resize", () =>
+      this.setState({ checkmark_width: window.innerWidth > 800 })
+    );
   };
 
   componentDidMount = () => {
@@ -150,7 +156,6 @@ class Home extends Component {
         { Authorization: "Token " + getCookie("token")[0].value },
         this.getGroupsCallback
       );
-      window.addEventListener("resize", this.updateSize);
     }
   };
 
@@ -383,16 +388,6 @@ class Home extends Component {
     this.setState({ groups: groups, groupSelected: obj });
   };
 
-  updateSize = () => {
-    // Decide if sidebars hide/not
-    let width = window.outerWidth;
-    if (width < 800) {
-      this.setState({ displayl: true, displayr: true });
-    } else {
-      this.setState({ displayr: false, displayl: false });
-    }
-  };
-
   render() {
     let {
       groupSelected: group,
@@ -479,8 +474,13 @@ class Home extends Component {
                   <Form id="groupupdate">
                     <Grid columns="equal">
                       <Grid.Row>
-                        <Grid.Column />
-                        <Grid.Column textAlign="center">
+                        <Grid.Column computer={5} mobile={1} tablet={3} />
+                        <Grid.Column
+                          computer={6}
+                          mobile={14}
+                          tablet={10}
+                          textAlign="center"
+                        >
                           <Input
                             icon="users"
                             type="text"
@@ -551,25 +551,126 @@ class Home extends Component {
                           <Divider horizontal />
                         </Grid.Column>
 
-                        <Grid.Column />
+                        <Grid.Column computer={5} mobile={1} tablet={3} />
                       </Grid.Row>
                     </Grid>
                   </Form>
                 </Modal.Content>
               </Modal>
             </Transition>
-
-            <NavBar
-              display={window.innerWidth < 800}
-              set={this.set}
-              displayl={this.state.displayl}
-              displayr={this.state.displayr}
-              active={1}
-              search={!this.isempty(group)}
-              func={this.handleSearch}
-              group={this.state.groupSelected}
-              subgroup={this.state.subgroup}
-            />
+            {!this.state.checkmark_width ? (
+              <Fragment>
+                <div id="navbar">
+                  <Menu
+                    className="navbar_compon"
+                    secondary
+                    style={{ paddingBottom: 10 }}
+                  >
+                    <Menu.Item
+                      icon="content"
+                      style={{
+                        color: "white",
+                        marginLeft: 15,
+                        marginTop: 10
+                      }}
+                      onClick={() =>
+                        this.setState({
+                          visiblenav: !this.state.visiblenav
+                        })
+                      }
+                    />
+                    {this.state.subgroup !== undefined &&
+                    Object.entries(this.state.subgroup).length !== 0 ? (
+                      <Menu.Item>
+                        <Input
+                          icon={
+                            <Icon name="search" style={{ color: "#1ce0c3" }} />
+                          }
+                          type="text"
+                          placeholder="Search"
+                          value={this.state.search}
+                          onChange={e =>
+                            this.setState({ search: e.target.value })
+                          }
+                          onKeyPress={e =>
+                            this.handleSearch(e, this.state.search)
+                          }
+                        />
+                      </Menu.Item>
+                    ) : (
+                      ""
+                    )}
+                  </Menu>
+                </div>
+                <div
+                  className={this.state.visiblenav ? "sidenav" : "sidenav_hide"}
+                >
+                  <div
+                    className={this.state.visiblenav ? "nav_content" : ""}
+                    style={this.state.visiblenav ? {} : { display: "none" }}
+                  >
+                    <h3>BrandFactory Inc</h3>
+                    <Menu secondary vertical style={{ width: "100%" }}>
+                      <Menu.Item
+                        as={Link}
+                        to={"/home"}
+                        style={{ color: "white" }}
+                        name="Home"
+                        onClick={() => window.location.refresh()}
+                      />
+                      <Menu.Item
+                        style={{ color: "white" }}
+                        icon="angle right"
+                        onClick={() =>
+                          this.setState({
+                            displayl: !this.state.displayl,
+                            visiblenav: false,
+                            displayr: false
+                          })
+                        }
+                        name="Groups"
+                      />
+                      <Menu.Item
+                        style={{ color: "white" }}
+                        icon="angle right"
+                        onClick={() =>
+                          this.setState({
+                            displayr: !this.state.displayr,
+                            visiblenav: false,
+                            displayl: false
+                          })
+                        }
+                        name="Team"
+                      />
+                      <Menu.Item
+                        style={{ color: "white" }}
+                        icon="cog"
+                        as={Link}
+                        to="/profile"
+                        name="Settings"
+                      />
+                      <Menu.Item
+                        style={{ color: "white" }}
+                        as={Link}
+                        to="/logout"
+                      >
+                        <Icon name="power" />
+                        Logout
+                      </Menu.Item>
+                    </Menu>
+                  </div>
+                </div>
+              </Fragment>
+            ) : (
+              <NavBar
+                set={this.set}
+                active={1}
+                search={!this.isempty(group)}
+                func={this.handleSearch}
+                group={this.state.groupSelected}
+                subgroup={this.state.subgroup}
+              />
+            )}
 
             {this.state.loader ? (
               <Dimmer active>
@@ -590,10 +691,15 @@ class Home extends Component {
                 </Modal.Header>
                 <Modal.Content>
                   <Form id="groupcreate">
-                    <Grid columns="equal">
+                    <Grid>
                       <Grid.Row>
-                        <Grid.Column />
-                        <Grid.Column textAlign="center">
+                        <Grid.Column computer={5} mobile={1} tablet={3} />
+                        <Grid.Column
+                          computer={6}
+                          mobile={14}
+                          tablet={10}
+                          textAlign="center"
+                        >
                           <Input
                             icon="users"
                             type="text"
@@ -662,284 +768,314 @@ class Home extends Component {
                           <Divider horizontal />
                         </Grid.Column>
 
-                        <Grid.Column />
+                        <Grid.Column computer={5} mobile={1} tablet={3} />
                       </Grid.Row>
                     </Grid>
                   </Form>
                 </Modal.Content>
               </Modal>
             </Transition>
-            <Sidebar className="sidebar_compon" visible={!this.state.displayl}>
-              <div style={{ marginTop: 20, marginLeft: 20 }}>
-                {this.state.groups.length === 0 ? (
-                  <Fragment>
-                    <div style={{ textAlign: "center" }}>
-                      <b>No groups currently</b>
-                    </div>
 
-                    <div id="addgroup">
-                      <Button
-                        style={{ marginLeft: 5, marginTop: 10 }}
-                        onClick={() =>
-                          this.setState({
-                            visible: true
-                          })
-                        }
+            <Fragment>
+              <Sidebar
+                className={
+                  this.state.checkmark_width
+                    ? "sidebar_compon"
+                    : "side_bar_responsive"
+                }
+                visible={this.state.checkmark_width || this.state.displayl}
+              >
+                <div style={{ marginTop: 20, marginLeft: "4vw" }}>
+                  {this.state.groups.length === 0 ? (
+                    <Fragment>
+                      <div style={{ textAlign: "center" }}>
+                        <b>No groups currently</b>
+                      </div>
+
+                      <div id="addgroup">
+                        <Button
+                          style={{ marginLeft: 5, marginTop: 10 }}
+                          onClick={() =>
+                            this.setState({
+                              visible: true
+                            })
+                          }
+                        >
+                          <div className="button_icon">
+                            <Icon style={{ zIndex: 10 }} name="add" />
+                          </div>
+                          Add new Group
+                        </Button>
+                      </div>
+                    </Fragment>
+                  ) : (
+                    <Menu vertical style={{ width: "100%" }} text>
+                      <Scrollbars
+                        autoHide
+                        autoHideTimeout={1000}
+                        autoHeight
+                        autoHeightMax={"70vh"}
                       >
-                        <div className="button_icon">
-                          <Icon style={{ zIndex: 10 }} name="add" />
-                        </div>
-                        Add new Group
-                      </Button>
-                    </div>
-                  </Fragment>
-                ) : (
-                  <Menu vertical style={{ width: "100%" }} text>
-                    <Scrollbars
-                      autoHide
-                      autoHideTimeout={1000}
-                      autoHeight
-                      autoHeightMax={"70vh"}
-                    >
-                      {this.state.groups.map((obj, index) => (
-                        <Fragment key={index}>
-                          <Menu.Item
-                            className={
-                              activeItem === obj.pk
-                                ? "menu_item_select"
-                                : "menu_item_compon"
-                            }
-                            onMouseEnter={() =>
-                              this.setState({ hover: obj.pk })
-                            }
-                            onMouseLeave={() => this.setState({ hover: false })}
-                            key={index}
-                            name={obj.name}
-                            active={activeItem === obj.pk}
-                            style={
-                              activeItem === obj.pk
-                                ? { background: "#ffffff" }
-                                : {}
-                            }
-                            onClick={() => {
-                              if (hoverselect) {
-                                hoverselect = false;
-                              } else {
-                                this.handleGroupSelect(obj);
+                        {this.state.groups.map((obj, index) => (
+                          <Fragment key={index}>
+                            <Menu.Item
+                              title={obj.name}
+                              className={
+                                activeItem === obj.pk
+                                  ? "menu_item_select"
+                                  : "menu_item_compon"
                               }
-                            }}
-                          >
-                            {obj.pic !== null && obj.pic !== "" ? (
-                              <Fragment>
-                                <Image
-                                  src={obj.pic}
-                                  style={{ height: 35, width: 35 }}
-                                  avatar
-                                />
-                                <b>{obj.name}</b>
-                              </Fragment>
-                            ) : (
-                              <div style={{ display: "inline" }}>
-                                <Icon
-                                  name="users"
-                                  style={{
-                                    marginTop: 15,
-                                    marginLeft: 15,
-                                    marginBottom: 15,
-                                    marginRight: 5
-                                  }}
-                                />
-                                <b style={{ top: 3 }}>{obj.name}</b>
-                              </div>
-                            )}
-
-                            {this.state.hover === obj.pk ? (
-                              <Dropdown
-                                style={{ marginLeft: 20 }}
-                                icon={
-                                  <Icon
-                                    name="cog"
-                                    onClick={() => {
-                                      hoverselect = true;
-                                    }}
-                                  />
+                              onMouseEnter={() =>
+                                this.setState({ hover: obj.pk })
+                              }
+                              onMouseLeave={() =>
+                                this.setState({ hover: false })
+                              }
+                              key={index}
+                              name={obj.name}
+                              active={activeItem === obj.pk}
+                              style={
+                                activeItem === obj.pk
+                                  ? { background: "#ffffff" }
+                                  : {}
+                              }
+                              onClick={() => {
+                                if (hoverselect) {
+                                  hoverselect = false;
+                                } else {
+                                  this.handleGroupSelect(obj);
                                 }
-                                direction="left"
-                              >
-                                <Dropdown.Menu>
-                                  {obj.edit ? (
-                                    <Fragment>
-                                      <Dropdown.Item
-                                        onClick={() =>
-                                          this.setState({
-                                            operation_pk: obj.pk,
-                                            modalvisible: true,
-                                            groupname: obj.name,
-                                            groupabout: obj.about
-                                          })
-                                        }
-                                      >
-                                        <div style={{ color: "#28abe2" }}>
-                                          <Icon name="edit outline" />
-                                          <b>Update</b>
-                                        </div>
-                                      </Dropdown.Item>
-                                      <Dropdown.Divider />
+                              }}
+                            >
+                              {obj.pic !== null && obj.pic !== "" ? (
+                                <Fragment>
+                                  <Image
+                                    src={obj.pic}
+                                    style={{ height: 35, width: 35 }}
+                                    avatar
+                                  />
+                                  <b>{obj.name}</b>
+                                </Fragment>
+                              ) : (
+                                <div style={{ display: "inline" }}>
+                                  <Icon
+                                    name="users"
+                                    size="large"
+                                    className="usericon"
+                                  />
+                                  <b style={{ top: 3 }}>
+                                    {obj.name.length > 14 ? (
+                                      <Fragment>
+                                        {obj.name.slice(0, 12) + ".."}
+                                      </Fragment>
+                                    ) : (
+                                      <Fragment>{obj.name}</Fragment>
+                                    )}
+                                  </b>
+                                </div>
+                              )}
+
+                              {this.state.hover === obj.pk ||
+                              !this.state.checkmark_width ? (
+                                <Dropdown
+                                  style={{
+                                    position: "absolute",
+                                    right: 0,
+                                    marginTop: 10,
+                                    marginLeft: 20
+                                  }}
+                                  icon={
+                                    <Icon
+                                      name="cog"
+                                      onClick={() => {
+                                        hoverselect = true;
+                                      }}
+                                    />
+                                  }
+                                  direction="left"
+                                >
+                                  <Dropdown.Menu>
+                                    {obj.edit ? (
+                                      <Fragment>
+                                        <Dropdown.Item
+                                          onClick={() =>
+                                            this.setState({
+                                              operation_pk: obj.pk,
+                                              modalvisible: true,
+                                              groupname: obj.name,
+                                              groupabout: obj.about
+                                            })
+                                          }
+                                        >
+                                          <div style={{ color: "#28abe2" }}>
+                                            <Icon name="edit outline" />
+                                            <b>Update</b>
+                                          </div>
+                                        </Dropdown.Item>
+                                        <Dropdown.Divider />
+                                        <Dropdown.Item
+                                          onClick={() => {
+                                            this.setState({
+                                              operation_pk: obj.pk
+                                            });
+                                            this.handleAlert(0);
+                                          }}
+                                        >
+                                          <div style={{ color: "#e8293c" }}>
+                                            <Icon name="trash alternate outline" />
+                                            Delete
+                                          </div>
+                                        </Dropdown.Item>
+                                      </Fragment>
+                                    ) : (
                                       <Dropdown.Item
                                         onClick={() => {
                                           this.setState({
                                             operation_pk: obj.pk
                                           });
-                                          this.handleAlert(0);
+                                          this.handleAlert(1);
                                         }}
                                       >
                                         <div style={{ color: "#e8293c" }}>
                                           <Icon name="trash alternate outline" />
-                                          Delete
+                                          Exit
                                         </div>
                                       </Dropdown.Item>
-                                    </Fragment>
-                                  ) : (
-                                    <Dropdown.Item
-                                      onClick={() => {
-                                        this.setState({ operation_pk: obj.pk });
-                                        this.handleAlert(1);
-                                      }}
-                                    >
-                                      <div style={{ color: "#e8293c" }}>
-                                        <Icon name="trash alternate outline" />
-                                        Exit
-                                      </div>
-                                    </Dropdown.Item>
-                                  )}
-                                </Dropdown.Menu>
-                              </Dropdown>
+                                    )}
+                                  </Dropdown.Menu>
+                                </Dropdown>
+                              ) : (
+                                ""
+                              )}
+                            </Menu.Item>
+                            {activeItem === obj.pk ? (
+                              <GroupSelected
+                                checkmark_width={this.state.checkmark_width}
+                                group={group}
+                                uri={this.props.location.pathname}
+                                params={this.state.pksearch}
+                                renderpost={this.state.renderpost}
+                                subgroup={subgroup}
+                                set={this.set}
+                                change={this.state.change}
+                                setLoader={this.setLoader}
+                                setMessage={this.setMessage}
+                              />
                             ) : (
                               ""
                             )}
-                          </Menu.Item>
-                          {activeItem === obj.pk ? (
-                            <GroupSelected
-                              group={group}
-                              uri={this.props.location.pathname}
-                              params={this.state.pksearch}
-                              renderpost={this.state.renderpost}
-                              subgroup={subgroup}
-                              set={this.set}
-                              change={this.state.change}
-                              setLoader={this.setLoader}
-                              setMessage={this.setMessage}
-                            />
-                          ) : (
-                            ""
-                          )}
-                          {index === this.state.groups.length - 1 &&
-                          activeItem !== obj.pk ? (
-                            <Fragment>
-                              <br />
-                              <br />
-                              <br />
-                            </Fragment>
-                          ) : (
-                            ""
-                          )}
-                        </Fragment>
-                      ))}
-                    </Scrollbars>
-                    <div id="addgroup">
-                      <Button
-                        onClick={() =>
-                          this.setState({
-                            visible: true
-                          })
-                        }
-                      >
-                        <div className="button_icon">
-                          <Icon style={{ zIndex: 10 }} name="add" />
+                            {index === this.state.groups.length - 1 &&
+                            activeItem !== obj.pk ? (
+                              <Fragment>
+                                <br />
+                                <br />
+                                <br />
+                              </Fragment>
+                            ) : (
+                              ""
+                            )}
+                          </Fragment>
+                        ))}
+                      </Scrollbars>
+                      <div id="addgroup" title="Add new Group">
+                        <Button
+                          onClick={() =>
+                            this.setState({
+                              visible: true
+                            })
+                          }
+                        >
+                          <div className="button_icon">
+                            <Icon style={{ zIndex: 10 }} name="add" />
+                          </div>
+                          Add new Group
+                        </Button>
+                      </div>
+                    </Menu>
+                  )}
+                </div>
+              </Sidebar>
+              <div
+                className="main_home_page"
+                style={
+                  this.state.checkmark_width
+                    ? { width: "56vw", marginLeft: "22vw" }
+                    : {}
+                }
+              >
+                {this.isempty(group) ? (
+                  <div
+                    style={{
+                      paddingTop: "calc(100px + 15vh)",
+                      textAlign: "center",
+                      overflow: "hidden"
+                    }}
+                  >
+                    <h2>Select a Group to Continue</h2>
+                    <Grid columns="equal">
+                      <Grid.Row>
+                        <Grid.Column />
+                        <Grid.Column>
+                          <Divider
+                            horizontal
+                            style={{ width: "10vw", marginLeft: 35 }}
+                          >
+                            Or
+                          </Divider>
+                        </Grid.Column>
+                        <Grid.Column />
+                      </Grid.Row>
+                    </Grid>
+                    <h2>Create a new Group</h2>
+                  </div>
+                ) : (
+                  <Fragment>
+                    {this.isempty(subgroup) ? (
+                      <Fragment>
+                        <div
+                          style={{
+                            paddingTop: "calc(100px + 15vh)",
+                            textAlign: "center"
+                          }}
+                        >
+                          <h2>Select a SubGroup to display the posts</h2>
                         </div>
-                        Add new Group
-                      </Button>
-                    </div>
-                  </Menu>
+                      </Fragment>
+                    ) : (
+                      <div style={{ marginTop: 100 }}>
+                        <BasePost
+                          ref={this.child}
+                          renderpost={this.state.renderpost}
+                          setLoader={this.setLoader}
+                          group={this.state.subgroup}
+                          setMessage={this.setMessage}
+                          pksearch={this.state.pksearch}
+                        />
+                      </div>
+                    )}
+                  </Fragment>
                 )}
               </div>
-            </Sidebar>
-            <div
-              className="main_home_page"
-              style={
-                !this.state.displayl
-                  ? { width: "56vw", marginLeft: "22vw" }
-                  : {}
-              }
-            >
-              {this.isempty(group) ? (
-                <div
-                  style={{
-                    paddingTop: "calc(100px + 15vh)",
-                    textAlign: "center",
-                    overflow: "hidden"
-                  }}
-                >
-                  <h2>Select a Group to Continue</h2>
-                  <Grid columns="equal">
-                    <Grid.Row>
-                      <Grid.Column />
-                      <Grid.Column>
-                        <Divider
-                          horizontal
-                          style={{ width: "10vw", marginLeft: 35 }}
-                        >
-                          Or
-                        </Divider>
-                      </Grid.Column>
-                      <Grid.Column />
-                    </Grid.Row>
-                  </Grid>
-                  <h2>Create a new Group</h2>
-                </div>
-              ) : (
-                <Fragment>
-                  {this.isempty(subgroup) ? (
-                    <Fragment>
-                      <div
-                        style={{
-                          paddingTop: "calc(100px + 15vh)",
-                          textAlign: "center"
-                        }}
-                      >
-                        <h2>Select a SubGroup to display the posts</h2>
-                      </div>
-                    </Fragment>
-                  ) : (
-                    <div style={{ marginTop: 100 }}>
-                      <BasePost
-                        ref={this.child}
-                        renderpost={this.state.renderpost}
-                        setLoader={this.setLoader}
-                        group={this.state.subgroup}
-                        setMessage={this.setMessage}
-                        pksearch={this.state.pksearch}
-                      />
-                    </div>
-                  )}
-                </Fragment>
-              )}
-            </div>
-            <Sidebar
-              className="sidebar_compon"
-              direction="right"
-              visible={!this.state.displayr}
-            >
-              {!this.isempty(group) ? (
-                <Fragment>
-                  <Notify group={group} set={this.set} />
-                  <UserList group={group} />
-                  <Invite group={group} setMessage={this.setMessage} />
-                </Fragment>
-              ) : (
-                ""
-              )}
-            </Sidebar>
+              <Sidebar
+                className={
+                  this.state.checkmark_width
+                    ? "sidebar_compon"
+                    : "side_bar_responsive"
+                }
+                direction="right"
+                visible={this.state.displayr || this.state.checkmark_width}
+              >
+                {!this.isempty(group) ? (
+                  <Fragment>
+                    <Notify group={group} set={this.set} />
+                    <UserList group={group} />
+                    <Invite group={group} setMessage={this.setMessage} />
+                  </Fragment>
+                ) : (
+                  ""
+                )}
+              </Sidebar>
+            </Fragment>
           </Fragment>
         )}
       </div>
@@ -976,15 +1112,12 @@ class GroupSelected extends Component {
       this.props.group !== prevProps.group ||
       prevProps.change != this.props.change
     ) {
-      console.log("came in");
       this.setState({
         group: this.props.group
       });
     }
 
     if (this.props.subgroup !== prevProps.subgroup) {
-      console.log("came here for cons");
-      console.log(this.props.subgroup);
       this.setState({ activeItem: this.props.subgroup.pk });
     }
   };
@@ -1191,10 +1324,15 @@ class GroupSelected extends Component {
             </Modal.Header>
             <Modal.Content>
               <Form id="subgroup_create_form">
-                <Grid columns="equal">
+                <Grid>
                   <Grid.Row>
-                    <Grid.Column />
-                    <Grid.Column textAlign="center">
+                    <Grid.Column computer={5} mobile={1} tablet={3} />
+                    <Grid.Column
+                      computer={6}
+                      mobile={14}
+                      tablet={10}
+                      textAlign="center"
+                    >
                       <Input
                         icon="users"
                         type="text"
@@ -1223,7 +1361,7 @@ class GroupSelected extends Component {
                       <Divider horizontal />
                     </Grid.Column>
 
-                    <Grid.Column />
+                    <Grid.Column computer={5} mobile={1} tablet={3} />
                   </Grid.Row>
                 </Grid>
               </Form>
@@ -1247,7 +1385,6 @@ class GroupSelected extends Component {
                       if (hoversub) {
                         hoversub = false;
                       } else {
-                        console.log("Came to the function call");
                         this.handleSubGroupSelect(obj);
                       }
                     }}
@@ -1258,9 +1395,10 @@ class GroupSelected extends Component {
                       ""
                     )}
                     # <b>{obj.name}</b>
-                    {this.state.hover === obj.pk ? (
+                    {this.state.hover === obj.pk ||
+                    !this.props.checkmark_width ? (
                       <Dropdown
-                        style={{ float: "right" }}
+                        style={{ float: "right", marginLeft: 10 }}
                         icon={
                           <Icon
                             name="cog"
@@ -1311,9 +1449,9 @@ class GroupSelected extends Component {
                 ))}
               </React.Fragment>
             </Menu>
-            <div id="addsubgroup">
+            <div id="addsubgroup" title="Add new Subgroup">
               <Button
-                style={{ marginLeft: "1vw" }}
+                style={{ marginLeft: "-1.5vw" }}
                 onClick={() => {
                   this.setState({
                     subgroupupdate: true,
@@ -1325,7 +1463,7 @@ class GroupSelected extends Component {
                 }}
               >
                 <div className="button_icon">
-                  <Icon style={{ zIndex: 10 }} name="add" />
+                  <Icon style={{ zIndex: 10, marginLeft: 0 }} name="add" />
                 </div>
                 Add new SubGroup
               </Button>

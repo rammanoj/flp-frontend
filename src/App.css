@@ -124,8 +124,6 @@
 #navbar .ui.secondary.navbar_compon.menu {
   background: linear-gradient(45deg, #40ceb8, #35b18a);
   box-shadow: 2px 1px 5px 1px #888888;
-  overflow-y: visible;
-  position: fixed;
   width: 100vw;
   z-index: 101;
   top: 0;
@@ -151,11 +149,27 @@
   width: 22vw;
 }
 
+.ui.left.visible.sidebar.side_bar_responsive {
+  margin-top: 57px !important;
+  position: absolute;
+  background: #f0f4f3;
+  z-index: 1 !important;
+  width: 40vw;
+}
+
 .ui.right.visible.sidebar.sidebar_compon {
   margin-top: 63px !important;
   background: #f0f4f3;
   z-index: 1 !important;
   width: 22vw;
+}
+
+.ui.right.visible.sidebar.side_bar_responsive {
+  margin-top: 57px !important;
+  position: absolute;
+  background: #f0f4f3;
+  z-index: 1 !important;
+  width: 40vw;
 }
 
 /* End of sidebar styles */
@@ -174,12 +188,15 @@
   border-radius: 300px 0px 0px 300px !important;
   color: black;
   padding: 0px !important;
+  /* padding-top: 5px !important;
+  padding-bottom: 5px !important; */
   border: none;
 }
 
 #addgroup .ui.button,
 #addsubgroup .ui.button {
   width: 90%;
+  white-space: nowrap;
   background-image: linear-gradient(180deg, #80e9d9, #35b18a);
   background-clip: text;
   color: transparent;
@@ -300,7 +317,8 @@
 
 #notify {
   padding: 0px !important;
-  width: "1%";
+  margin-left: 2vw;
+  margin-right: 2vw;
 }
 
 #notify_message {
@@ -330,7 +348,9 @@
 }
 
 #invite_users {
-  width: 95%;
+  text-align: left;
+  margin-left: 1vw;
+  padding: 0px !important;
   color: #1da789;
   background: #f0f4f3 !important;
 }
@@ -513,4 +533,40 @@
   position: absolute;
   margin-left: 3%;
   margin-top: 2%;
+}
+
+.users.large.icon.usericon {
+  margin-left: 0px;
+  margin-right: 15px;
+  color: #35b18a;
+  margin-top: 5px;
+  margin-bottom: 5px;
+  margin-left: 3px;
+}
+
+.sidenav {
+  height: 100vh;
+  z-index: 3;
+  background: linear-gradient(45deg, #40ceb8, #35b18a);
+  color: white;
+  width: 40vw;
+  position: absolute;
+  -webkit-transition: width 0.5s; /* For Safari 3.1 to 6.0 */
+  transition: width 0.5s;
+}
+
+.sidenav_hide {
+  position: absolute;
+  z-index: 3;
+  -webkit-transition: width 0.5s; /* For Safari 3.1 to 6.0 */
+  transition: width 0.5s;
+  background: linear-gradient(45deg, #40ceb8, #35b18a);
+  height: 100vh;
+  width: 0px;
+}
+
+.nav_content {
+  margin-top: 18vh;
+  color: white !important;
+  height: 100vh;
 }
