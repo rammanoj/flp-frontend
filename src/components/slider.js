@@ -93,8 +93,18 @@ export default class Slider extends React.Component {
               <Modal.Content>
                 <Grid style={{ minHeight: "90vh" }}>
                   <Grid.Row>
-                    <Grid.Column width={2} style={{ padding: 0 }} />
-                    <Grid.Column width={9} style={{ padding: 0 }}>
+                    <Grid.Column
+                      computer={2}
+                      mobile={1}
+                      tablet={1}
+                      style={{ padding: 0 }}
+                    />
+                    <Grid.Column
+                      computer={9}
+                      mobile={15}
+                      tablet={15}
+                      style={{ padding: 0 }}
+                    >
                       <div
                         style={{
                           background: "#000",
@@ -228,8 +238,11 @@ export default class Slider extends React.Component {
                         )}
                       </div>
                     </Grid.Column>
+
                     <Grid.Column
-                      width={5}
+                      computer={5}
+                      mobile={15}
+                      tablet={15}
                       style={{ padding: 0, width: "100%" }}
                     >
                       <Card

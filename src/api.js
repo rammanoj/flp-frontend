@@ -1,4 +1,4 @@
-const BASE_API_URI = "http://3.16.215.150/";
+const BASE_API_URI = "http://127.0.0.1:8000/";
 
 // method: POST
 export const signup = BASE_API_URI + "accounts/signup/";

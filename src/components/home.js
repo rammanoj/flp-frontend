@@ -785,7 +785,14 @@ class Home extends Component {
                 }
                 visible={this.state.checkmark_width || this.state.displayl}
               >
-                <div style={{ marginTop: 20, marginLeft: "4vw" }}>
+                <div
+                  style={{
+                    marginLeft: "4vw",
+                    width: "82%",
+                    position: "absolute",
+                    bottom: 100
+                  }}
+                >
                   {this.state.groups.length === 0 ? (
                     <Fragment>
                       <div style={{ textAlign: "center" }}>
@@ -814,7 +821,7 @@ class Home extends Component {
                         autoHide
                         autoHideTimeout={1000}
                         autoHeight
-                        autoHeightMax={"70vh"}
+                        autoHeightMax={"40vh"}
                       >
                         {this.state.groups.map((obj, index) => (
                           <Fragment key={index}>
@@ -1468,10 +1475,6 @@ class GroupSelected extends Component {
                 Add new SubGroup
               </Button>
             </div>
-            <h5 style={{ color: "#35b18a" }}>Group: </h5>
-            <p style={{ width: "90%", fontFamily: "Courier" }}>{group.about}</p>
-            <h5 style={{ color: "#35b18a" }}>Created By: </h5>
-            <a href="#">{group.created_by}</a>
           </div>
         </Fragment>
       </Fragment>
